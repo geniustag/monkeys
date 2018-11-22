@@ -1,5 +1,8 @@
 pragma solidity ^0.4.24;
 
+import "./SafeMath.sol";
+import "./F3DKeysCalcLong.sol";
+
 contract F3Devents {
     // fired whenever a player registers a name
     event onNewPlayer
@@ -41,10 +44,8 @@ contract F3Devents {
     event onWithdrawAndDistribute
     (
         address playerAddress,
-        bytes32 playerName,
         uint256 ethOut,
         address winnerAddr,
-        bytes32 winnerName,
         uint256 amountWon,
         uint256 newPot,
         uint256 TeamAmount,
@@ -56,10 +57,8 @@ contract F3Devents {
     event onBuyAndDistribute
     (
         address playerAddress,
-        bytes32 playerName,
         uint256 ethIn,
         address winnerAddr,
-        bytes32 winnerName,
         uint256 amountWon,
         uint256 newPot,
         uint256 TeamAmount,
@@ -95,6 +94,7 @@ library F3Ddatasets {
         address winnerAddr;         // winner address
         uint256 amountWon;          // amount won
         uint256 newPot;             // amount in new pot
+        uint256 TeamAmount;          // amount distributed to gen
         uint256 genAmount;          // amount distributed to gen
         uint256 potAmount;          // amount added to pot
     }
@@ -121,9 +121,12 @@ library F3Ddatasets {
         uint256 pot;    // eth to pot (during round) / final amount paid to winner (after round ends)
         uint256 mask;   // global mask
     }
-    struct PotSplit {
-        uint256 gen;    // % of pot thats paid to key holders of current round
-        uint256 team;    // % of pot thats paid to team holders
+    struct SplitRates {
+        uint256 allBonus;              // % of pot thats paid to key holders of current round
+        uint256 affiliateBonus;        // % of pot thats paid to 9 parents
+        uint256 bigPot;                // % of pot thats paid to final 10 winners
+        uint256 airdrop;               // % of airdrop
+        uint256 initialTeams;          // % of initial team
     }
 }
 contract PlayerBook {
@@ -189,12 +192,11 @@ contract PlayerBook {
 
 //==============================================================================
     function getPlayerID(address _addr)
-        isRegisteredGame()
         external
-        returns (uint256)
+        returns (uint256, bool)
     {
-        determinePID(_addr);
-        return (pIDxAddr_[_addr]);
+        bool isNew = determinePID(_addr);
+        return (pIDxAddr_[_addr], isNew);
     }
     
     function getPlayerLAff(uint256 _pID)
@@ -215,27 +217,24 @@ contract PlayerBook {
 }
 
 interface PlayerBookInterface {
-    function getPlayerID(address _addr) external returns (uint256);
-    function getPlayerName(uint256 _pID) external view returns (bytes32);
+    function getPlayerID(address _addr) external returns (uint256, bool);
     function getPlayerLAff(uint256 _pID) external view returns (uint256);
     function getPlayerAddr(uint256 _pID) external view returns (address);
 }
 
-contract FoMoLike {
+contract FoMoLike is F3Devents {
     using SafeMath for *;
-    using NameFilter for string;
     using F3DKeysCalcLong for uint256;
     
-    otherFoMo3D private otherF3D_;
+    // otherFoMo3D private otherF3D_;
     PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
-    F3DexternalSettingsInterface constant private extSettings = F3DexternalSettingsInterface(0x32967D6c142c2F38AB39235994e2DDF11c37d590);
 //==============================================================================
 // (game settings)
 //=================_|===========================================================
-    string constant public name = "FoMoLike";
-    string constant public symbol = "FL";
-    uint256 private rndExtra_ = extSettings.getLongExtra();     // length of the very first ICO 
-    uint256 private rndGap_ = extSettings.getLongGap();         // length of ICO phase, set to 1 year for EOS.
+    string constant public name = "Monkey";
+    string constant public symbol = "MK";
+    uint256 private rndExtra_ = 10 minutes;     // length of the very first ICO 
+    uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
     uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
@@ -258,19 +257,15 @@ contract FoMoLike {
 //****************
     mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
-//****************
-// TEAM FEE DATA , Team的费用分配数据
-//****************
-    mapping (uint256 => F3Ddatasets.TeamFee) public fees_;          // (team => fees) fee distribution by team
-    mapping (uint256 => F3Ddatasets.PotSplit) public potSplit_;     // (team => fees) pot split distribution by team
+    F3Ddatasets.SplitRates public potSplit;     // (team => fees) pot split distribution by team
 //==============================================================================
 // (initial data setup upon contract deploy)
 //==============================================================================
     constructor()
         public
     {
-        // how to split up the final pot based on which team was picked
-        potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
+        // 40% to for all keys holders, 35% to affiliates, 18% to big reward pot, 2% to airdrop pot, 5% to initialTeams;    
+        potSplit = F3Ddatasets.SplitRates(40,35,18,2,5);
     }
 //==============================================================================
     modifier isActivated() {
@@ -403,7 +398,6 @@ contract FoMoLike {
      * -functionhash- 0x82bfc739 (using address for affiliate)
      * -functionhash- 0x079ce327 (using name for affiliate)
      * @param _affCode the ID/address/name of the player who gets the affiliate fee
-     * @param _team what team is the player playing for?
      * @param _eth amount of earnings to use (remainder returned to gen vault)
      */
     function reLoadXid(uint256 _affCode, uint256 _eth)
@@ -516,16 +510,16 @@ contract FoMoLike {
             // build event data
             
             // fire withdraw and distribute event
-            emit F3Devents.onWithdrawAndDistribute
-            (
-                msg.sender, 
-                _eth, 
-                _eventData_.winnerAddr, 
-                _eventData_.amountWon, 
-                _eventData_.newPot, 
-                _eventData_.TeamAmount, 
-                _eventData_.genAmount
-            );
+            // emit F3Devents.onWithdrawAndDistribute
+            // (
+            //     msg.sender, 
+            //     _eth, 
+            //     _eventData_.winnerAddr, 
+            //     _eventData_.amountWon, 
+            //     _eventData_.newPot, 
+            //     _eventData_.TeamAmount, 
+            //     _eventData_.genAmount
+            // );
             
         // in any other situation
         } else {
@@ -537,7 +531,7 @@ contract FoMoLike {
                 plyr_[_pID].addr.transfer(_eth);
             
             // fire withdraw event
-            emit F3Devents.onWithdraw(_pID, msg.sender, _eth, _now);
+            // emit F3Devents.onWithdraw(_pID, msg.sender, _eth, _now);
         }
     }
     
@@ -549,9 +543,10 @@ contract FoMoLike {
         address _addr = msg.sender;
         uint256 _paid = msg.value;
 
-        bool _isNewPlayer = Player.determinePID(_addr)
+        (uint256 _pID, bool _isNewPlayer) = PlayerBook.getPlayerID(_addr);
         
-        uint256 _pID = pIDxAddr_[_addr];
+        // uint256 _pID = pIDxAddr_[_addr];
+        uint256 _affID = _affCode;
         
         // fire event
         emit F3Devents.onNewPlayer(_pID, _addr, _isNewPlayer, _affID, plyr_[_affID].addr, _paid, now);
@@ -663,7 +658,7 @@ contract FoMoLike {
         view
         returns(uint256)
     {
-        return(  ((((round_[_rID].mask).add(((((round_[_rID].pot).mul(potSplit_[round_[_rID].team].gen)) / 100).mul(1000000000000000000)) / (round_[_rID].keys))).mul(plyrRnds_[_pID][_rID].keys)) / 1000000000000000000)  );
+        return(  ((((round_[_rID].mask).add(((((round_[_rID].pot).mul(potSplit.allBonus)) / 100).mul(1000000000000000000)) / (round_[_rID].keys))).mul(plyrRnds_[_pID][_rID].keys)) / 1000000000000000000)  );
     }
     
     /**
@@ -715,7 +710,7 @@ contract FoMoLike {
     function getPlayerInfoByAddress(address _addr)
         public 
         view 
-        returns(uint256, bytes32, uint256, uint256, uint256, uint256, uint256)
+        returns(uint256, uint256, uint256, uint256, uint256, uint256)
     {
         // setup local rID
         uint256 _rID = rID_;
@@ -729,7 +724,6 @@ contract FoMoLike {
         return
         (
             _pID,                               //0
-            plyr_[_pID].name,                   //1
             plyrRnds_[_pID][_rID].keys,         //2
             plyr_[_pID].win,                    //3
             (plyr_[_pID].gen).add(calcUnMaskedEarnings(_pID, plyr_[_pID].lrnd)),       //4
@@ -759,7 +753,7 @@ contract FoMoLike {
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             // call core 
-            core(_rID, _pID, msg.value, _affID, _team, _eventData_);
+            core(_rID, _pID, msg.value, _affID, _eventData_);
         
         // if round is not active     
         } else {
@@ -810,7 +804,7 @@ contract FoMoLike {
             plyr_[_pID].gen = withdrawEarnings(_pID).sub(_eth);
             
             // call core 
-            core(_rID, _pID, _eth, _affID, _team, _eventData_);
+            core(_rID, _pID, _eth, _affID, _eventData_);
         
         // if round is not active and end round needs to be ran   
         } else if (_now > round_[_rID].end && round_[_rID].ended == false) {
@@ -866,8 +860,6 @@ contract FoMoLike {
             // set new leaders
             if (round_[_rID].plyr != _pID)
                 round_[_rID].plyr = _pID;  
-            if (round_[_rID].team != _team)
-                round_[_rID].team = _team; 
         }
             
             // manage airdrops
@@ -910,14 +902,13 @@ contract FoMoLike {
             // update round
             round_[_rID].keys = _keys.add(round_[_rID].keys);
             round_[_rID].eth = _eth.add(round_[_rID].eth);
-            rndTmEth_[_rID][_team] = _eth.add(rndTmEth_[_rID][_team]);
     
             // distribute eth
-            _eventData_ = distributeExternal(_rID, _pID, _eth, _affID, _team, _eventData_);
-            _eventData_ = distributeInternal(_rID, _pID, _eth, _team, _keys, _eventData_);
+            _eventData_ = distributeExternal(_rID, _pID, _eth, _affID, _eventData_);
+            _eventData_ = distributeInternal(_rID, _pID, _eth, _keys, _eventData_);
             
             // call end tx function to fire end tx event.
-            endTx(_pID, _team, _eth, _keys, _eventData_);
+            endTx(_pID, _eth, _keys, _eventData_);
         }
     }
 //==============================================================================
@@ -988,7 +979,7 @@ contract FoMoLike {
     /**
      * @dev receives name/player info from names contract 
      */
-    function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
+    function receivePlayerInfo(uint256 _pID, address _addr, uint256 _laff)
         external
     {
         require (msg.sender == address(PlayerBook), "your not playerNames contract... hmmm..");
@@ -1012,8 +1003,9 @@ contract FoMoLike {
         // if player is new to this version of fomo3d
         if (_pID == 0)
         {
+            bool isNew;
             // grab their player ID, name and last aff ID, from player names contract 
-            _pID = PlayerBook.getPlayerID(msg.sender);
+            (_pID , isNew) = PlayerBook.getPlayerID(msg.sender);
             uint256 _laff = PlayerBook.getPlayerLAff(_pID);
             
             // set up player account 
@@ -1058,7 +1050,6 @@ contract FoMoLike {
         
         // grab our winning player and team id's
         uint256 _winPID = round_[_rID].plyr;
-        uint256 _winTID = round_[_rID].team;
         
         // grab our pot amount
         uint256 _pot = round_[_rID].pot;
@@ -1067,9 +1058,9 @@ contract FoMoLike {
         // p3d share, and amount reserved for next pot 
         uint256 _win = (_pot.mul(48)) / 100;
         uint256 _com = (_pot / 50);
-        uint256 _gen = (_pot.mul(potSplit_[_winTID].gen)) / 100;
-        uint256 _p3d = (_pot.mul(potSplit_[_winTID].p3d)) / 100;
-        uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_p3d);
+        uint256 _gen = (_pot.mul(potSplit.allBonus)) / 100;
+        uint256 _initTeams = (_pot.mul(potSplit.initialTeams)) / 100;
+        uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_initTeams);
         
         // calculate ppt for round mask
         uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
@@ -1177,16 +1168,7 @@ contract FoMoLike {
             emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, _rID, _pID, _aff, now);
         }
         
-        // pay out p3d
-        _p3d = _p3d.add((_eth.mul(fees_[_team].p3d)) / (100));
-        if (_p3d > 0)
-        {
-            // deposit to divies contract
-            Divies.deposit.value(_p3d)();
-            
-            // set up event data
-            _eventData_.TeamAmount = _p3d.add(_eventData_.TeamAmount);
-        }
+       
         
         return(_eventData_);
     }
@@ -1199,15 +1181,15 @@ contract FoMoLike {
         returns(F3Ddatasets.EventReturns)
     {
         // calculate gen share
-        uint256 _gen = (_eth.mul(fees_[_team].gen)) / 100;
+        uint256 _gen = (_eth.mul(potSplit.allBonus)) / 100;
         
         // toss 1% into airdrop pot 
         uint256 _air = (_eth / 100);
         airDropPot_ = airDropPot_.add(_air);
         
         // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(fees_[_team].p3d)) / 100));
-        
+        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(potSplit.initialTeams)) / 100));
+
         // calculate pot 
         uint256 _pot = _eth.sub(_gen);
         
@@ -1302,25 +1284,19 @@ contract FoMoLike {
             airDropPot_
         );
     }
-//==============================================================================
-    /** upon contract deploy, it will be deactivated.  this is a one time
-     * use function that will activate the contract.  we do this so devs 
-     * have time to set things up on the web end                            **/
+//=============================================================================
     bool public activated_ = false;
     function activate()
         public
     {
         // only team just can activate 
         require(
-            msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C
+            msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C,
             "only team just can activate"
         );
-
-        // make sure that its been linked.
-        require(address(otherF3D_) != address(0), "must link to other FoMo3D first");
         
         // can only be ran once
-        require(activated_ == false, "fomo3d already activated");
+        require(activated_ == false, "Monkey already activated");
         
         // activate the contract 
         activated_ = true;
