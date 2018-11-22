@@ -166,7 +166,6 @@ contract PlayerBook {
         
         plyr_[8].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
         pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 8;
-        pID_ = 4;
         
         plyr_[9].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
         pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 9;
@@ -174,8 +173,8 @@ contract PlayerBook {
         pID_ = 9;
     }
 
-//==============================================================================
-    function determinePID(address _addr)
+    //==============================================================================
+    function determinePID(address _addr, uint256 affID)
         private
         returns (bool)
     {
@@ -184,19 +183,31 @@ contract PlayerBook {
             pID_++;
             pIDxAddr_[_addr] = pID_;
             plyr_[pID_].addr = _addr;
+            require (affID > 0 && plyr_[affID].addr != address(0), "Invalid affId");
+            if (plyr_[pID_].laff != 0)
+                plyr_[pID_].laff = affID;
             return (true);
         } else {
             return (false);
         }
     }
 
-//==============================================================================
+    //==============================================================================
+    
+    function registerPlayerID(address _addr, uint256 affID)
+        external
+        returns (bool)
+    {
+        return determinePID(_addr, affID);
+    }
+    
     function getPlayerID(address _addr)
         external
-        returns (uint256, bool)
+        view
+        returns (uint256)
     {
-        bool isNew = determinePID(_addr);
-        return (pIDxAddr_[_addr], isNew);
+        // bool isNew = determinePID(_addr, affID);
+        return (pIDxAddr_[_addr]);
     }
     
     function getPlayerLAff(uint256 _pID)
@@ -213,11 +224,21 @@ contract PlayerBook {
     {
         return (plyr_[_pID].addr);
     }
+    
+    function getMaxPID() 
+        external
+        view
+        returns (uint256 )
+    {
+        return pID_;
+    }
         
 }
 
 interface PlayerBookInterface {
-    function getPlayerID(address _addr) external returns (uint256, bool);
+    function registerPlayerID(address _addr, uint256 affID) external returns (bool);
+    function getMaxPID() external returns (uint256);
+    function getPlayerID(address _addr) external returns (uint256);
     function getPlayerLAff(uint256 _pID) external view returns (uint256);
     function getPlayerAddr(uint256 _pID) external view returns (address);
 }
@@ -227,10 +248,10 @@ contract FoMoLike is F3Devents {
     using F3DKeysCalcLong for uint256;
     
     // otherFoMo3D private otherF3D_;
-    PlayerBookInterface constant private PlayerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
-//==============================================================================
-// (game settings)
-//=================_|===========================================================
+    PlayerBookInterface constant private playerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
+    //==============================================================================
+    // (game settings)
+    //=================_|===========================================================
     string constant public name = "Monkey";
     string constant public symbol = "MK";
     uint256 private rndExtra_ = 10 minutes;     // length of the very first ICO 
@@ -238,36 +259,42 @@ contract FoMoLike is F3Devents {
     uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
-//==============================================================================
-// (data used to store game info that changes)
-//=============================|================================================
+    uint256 constant private minPlayerCountForAirdrop = 30;     // need min 30 players to airdrop
+    uint256 constant private airDropAmountLimit = 1e19;            // 10 eth 
+    uint256 public initKeyPrice = 1e15;                         // 0.001 eth
+    
+    //==============================================================================
+    // (data used to store game info that changes)
+    //=============================|================================================
     uint256 public airDropPot_;                     // person who gets the airdrop wins part of this pot
     uint256 public airDropCountTracker_ = 0;        // incremented each time a "qualified" tx occurs.  used to determine winning air drop
     uint256 public rID_;                            // round id number / total rounds that have happened
-    uint256 public initKeyPrice = 1000000000000000;
 
-//****************
-// PLAYER DATA 
-//****************
+    //****************
+    // PLAYER DATA 
+    //****************
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (uint256 => F3Ddatasets.Player) public plyr_;   // (pID => data) player data
     mapping (uint256 => mapping (uint256 => F3Ddatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
-//****************
-// ROUND DATA 
-//****************
+    
+    //****************
+    // ROUND DATA 
+    //****************
     mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
-    F3Ddatasets.SplitRates public potSplit;     // (team => fees) pot split distribution by team
-//==============================================================================
-// (initial data setup upon contract deploy)
-//==============================================================================
+    mapping (uint256 => uint256) public lastTenPIDs;
+    
+    F3Ddatasets.SplitRates public potSplit;
+    
+    // deploy
     constructor()
         public
     {
         // 40% to for all keys holders, 35% to affiliates, 18% to big reward pot, 2% to airdrop pot, 5% to initialTeams;    
         potSplit = F3Ddatasets.SplitRates(40,35,18,2,5);
     }
-//==============================================================================
+    
+    //==============================================================================
     modifier isActivated() {
         require(activated_ == true, "its not ready yet.  check ?eta in discord"); 
         _;
@@ -294,13 +321,21 @@ contract FoMoLike is F3Devents {
         _;    
     }
     
-//==============================================================================
+    modifier isHasAff(){
+        address _addr = msg.sender;
+        uint aff = plyr_[pIDxAddr_[_addr]].laff;
+        require(pIDxAddr_[_addr] != aff && aff > 0 && plyr_[aff].addr != address(0), "you need set a valid aff");
+        _;
+    }
+    
+    //==============================================================================
     /**
      * @dev emergency buy uses last stored affiliate ID and team snek
      */
     function()
         isActivated()
         isHuman()
+        isHasAff()
         isWithinLimits(msg.value)
         public
         payable
@@ -312,7 +347,16 @@ contract FoMoLike is F3Devents {
         uint256 _pID = pIDxAddr_[msg.sender];
         
         // buy core 
-        buyCore(_pID, plyr_[_pID].laff, _eventData_);
+        buyCore(_pID, _eventData_);
+    }
+    
+    function register(address _addr, uint256 affId)
+        public
+        payable
+    {
+        require(affId > 0 && pIDxAddr_[_addr] != affId && plyr_[affId].addr != address(0)); // need a valid affId
+        
+        playerBook.registerPlayerID(_addr, affId);
     }
     
     /**
@@ -320,41 +364,26 @@ contract FoMoLike is F3Devents {
      * -functionhash- 0x8f38f309 (using ID for affiliate)
      * -functionhash- 0x98a0871d (using address for affiliate)
      * -functionhash- 0xa65b37a1 (using name for affiliate)
-     * @param _affCode the ID/address/name of the player who gets the affiliate fee
      */
-    function buyXid(uint256 _affCode)
+    function buyXid()
         isActivated()
         isHuman()
+        isHasAff()
         isWithinLimits(msg.value)
         public
         payable
     {
         // set up our tx event data and determine if player is new or not
         F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
-        
-        // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
         
-        // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
-        if (_affCode == 0 || _affCode == _pID)
-        {
-            // use last stored affiliate code 
-            _affCode = plyr_[_pID].laff;
-            
-        // if affiliate code was given & its not the same as previously stored 
-        } else if (_affCode != plyr_[_pID].laff) {
-            // update last affiliate 
-            plyr_[_pID].laff = _affCode;
-        }
-        
-        // buy core 
-        buyCore(_pID, _affCode, _eventData_);
+        buyCore(_pID, _eventData_);
     }
     
-    function buyXaddr(address _affCode)
+    function buyXaddr()
         isActivated()
         isHuman()
+        isHasAff()
         isWithinLimits(msg.value)
         public
         payable
@@ -362,32 +391,10 @@ contract FoMoLike is F3Devents {
         // set up our tx event data and determine if player is new or not
         F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
         
-        // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
         
-        // manage affiliate residuals
-        uint256 _affID;
-        // if no affiliate code was given or player tried to use their own, lolz
-        if (_affCode == address(0) || _affCode == msg.sender)
-        {
-            // use last stored affiliate code
-            _affID = plyr_[_pID].laff;
-        
-        // if affiliate code was given    
-        } else {
-            // get affiliate ID from aff Code 
-            _affID = pIDxAddr_[_affCode];
-            
-            // if affID is not the same as previously stored 
-            if (_affID != plyr_[_pID].laff)
-            {
-                // update last affiliate
-                plyr_[_pID].laff = _affID;
-            }
-        }
-        
         // buy core 
-        buyCore(_pID, _affID, _eventData_);
+        buyCore(_pID, _eventData_);
     }
 
     
@@ -419,15 +426,10 @@ contract FoMoLike is F3Devents {
         {
             // use last stored affiliate code 
             _affCode = plyr_[_pID].laff;
-            
-        // if affiliate code was given & its not the same as previously stored 
-        } else if (_affCode != plyr_[_pID].laff) {
-            // update last affiliate 
-            plyr_[_pID].laff = _affCode;
         }
 
         // reload core
-        reLoadCore(_pID, _affCode, _eth, _eventData_);
+        reLoadCore(_pID,  _eth, _eventData_);
     }
     
     function reLoadXaddr(address _affCode, uint256 _eth)
@@ -450,22 +452,10 @@ contract FoMoLike is F3Devents {
         {
             // use last stored affiliate code
             _affID = plyr_[_pID].laff;
-        
-        // if affiliate code was given    
-        } else {
-            // get affiliate ID from aff Code 
-            _affID = pIDxAddr_[_affCode];
-            
-            // if affID is not the same as previously stored 
-            if (_affID != plyr_[_pID].laff)
-            {
-                // update last affiliate
-                plyr_[_pID].laff = _affID;
-            }
         }
         
         // reload core
-        reLoadCore(_pID, _affID, _eth, _eventData_);
+        reLoadCore(_pID, _eth, _eventData_);
     }
     
 
@@ -510,16 +500,16 @@ contract FoMoLike is F3Devents {
             // build event data
             
             // fire withdraw and distribute event
-            // emit F3Devents.onWithdrawAndDistribute
-            // (
-            //     msg.sender, 
-            //     _eth, 
-            //     _eventData_.winnerAddr, 
-            //     _eventData_.amountWon, 
-            //     _eventData_.newPot, 
-            //     _eventData_.TeamAmount, 
-            //     _eventData_.genAmount
-            // );
+            emit F3Devents.onWithdrawAndDistribute
+            (
+                msg.sender, 
+                _eth, 
+                _eventData_.winnerAddr, 
+                _eventData_.amountWon, 
+                _eventData_.newPot, 
+                _eventData_.TeamAmount, 
+                _eventData_.genAmount
+            );
             
         // in any other situation
         } else {
@@ -533,23 +523,6 @@ contract FoMoLike is F3Devents {
             // fire withdraw event
             // emit F3Devents.onWithdraw(_pID, msg.sender, _eth, _now);
         }
-    }
-    
-    function registerID(uint256 _affCode)
-        isHuman()
-        public
-        payable
-    {
-        address _addr = msg.sender;
-        uint256 _paid = msg.value;
-
-        (uint256 _pID, bool _isNewPlayer) = PlayerBook.getPlayerID(_addr);
-        
-        // uint256 _pID = pIDxAddr_[_addr];
-        uint256 _affID = _affCode;
-        
-        // fire event
-        emit F3Devents.onNewPlayer(_pID, _addr, _isNewPlayer, _affID, plyr_[_affID].addr, _paid, now);
     }
 
 //==============================================================================
@@ -690,7 +663,7 @@ contract FoMoLike is F3Devents {
             round_[_rID].pot,                                   //5
             round_[_rID].plyr,                                  //6
             plyr_[round_[_rID].plyr].addr,                      //7
-            airDropCountTracker_ + (airDropPot_ * 1000)              //8
+            airDropCountTracker_ + (airDropPot_ * 10000)              //8
         );
     }
 
@@ -723,24 +696,24 @@ contract FoMoLike is F3Devents {
         
         return
         (
-            _pID,                               //0
-            plyrRnds_[_pID][_rID].keys,         //2
-            plyr_[_pID].win,                    //3
-            (plyr_[_pID].gen).add(calcUnMaskedEarnings(_pID, plyr_[_pID].lrnd)),       //4
-            plyr_[_pID].aff,                    //5
-            plyrRnds_[_pID][_rID].eth           //6
+            _pID,                                                                       //0
+            plyrRnds_[_pID][_rID].keys,                                                 //2
+            plyr_[_pID].win,                                                            //3
+            (plyr_[_pID].gen).add(calcUnMaskedEarnings(_pID, plyr_[_pID].lrnd)),        //4
+            plyr_[_pID].aff,                                                            //5
+            plyrRnds_[_pID][_rID].eth                                                   //6
         );
     }
 
 //==============================================================================
-//     _ _  _ _   | _  _ . _  .
-//    (_(_)| (/_  |(_)(_||(_  . (this + tools + calcs + modules = our softwares engine)
+//  (this + tools + calcs + modules = our softwares engine)
 //=====================_|=======================================================
     /**
      * @dev logic runs whenever a buy order is executed.  determines how to handle 
      * incoming eth depending on if we are in an active round or not
      */
-    function buyCore(uint256 _pID, uint256 _affID, F3Ddatasets.EventReturns memory _eventData_)
+    // function buyCore(uint256 _pID, uint256 _affID, F3Ddatasets.EventReturns memory _eventData_)
+    function buyCore(uint256 _pID, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -753,7 +726,7 @@ contract FoMoLike is F3Devents {
         if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             // call core 
-            core(_rID, _pID, msg.value, _affID, _eventData_);
+            core(_rID, _pID, msg.value, _eventData_);
         
         // if round is not active     
         } else {
@@ -786,7 +759,7 @@ contract FoMoLike is F3Devents {
      * @dev logic runs whenever a reload order is executed.  determines how to handle 
      * incoming eth depending on if we are in an active round or not 
      */
-    function reLoadCore(uint256 _pID, uint256 _affID, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
+    function reLoadCore(uint256 _pID, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -804,7 +777,7 @@ contract FoMoLike is F3Devents {
             plyr_[_pID].gen = withdrawEarnings(_pID).sub(_eth);
             
             // call core 
-            core(_rID, _pID, _eth, _affID, _eventData_);
+            core(_rID, _pID, _eth, _eventData_);
         
         // if round is not active and end round needs to be ran   
         } else if (_now > round_[_rID].end && round_[_rID].ended == false) {
@@ -829,21 +802,12 @@ contract FoMoLike is F3Devents {
      * @dev this is the core logic for any buy/reload that happens while a round 
      * is live.
      */
-    function core(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, F3Ddatasets.EventReturns memory _eventData_)
+    function core(uint256 _rID, uint256 _pID, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
         // if player is new to round
         if (plyrRnds_[_pID][_rID].keys == 0)
             _eventData_ = managePlayer(_pID, _eventData_);
-        
-        // early round eth limiter 
-        if (round_[_rID].eth < 100000000000000000000 && plyrRnds_[_pID][_rID].eth.add(_eth) > 1000000000000000000)
-        {
-            uint256 _availableLimit = (1000000000000000000).sub(plyrRnds_[_pID][_rID].eth);
-            uint256 _refund = _eth.sub(_availableLimit);
-            plyr_[_pID].gen = plyr_[_pID].gen.add(_refund);
-            _eth = _availableLimit;
-        }
         
         // if eth left is greater than min eth allowed (sorry no pocket lint)
         if (_eth > 1000000000) 
@@ -853,46 +817,30 @@ contract FoMoLike is F3Devents {
             uint256 _keys = (round_[_rID].eth).keysRec(_eth);
             
             // if they bought at least 1 whole key
-            if (_keys >= 1000000000000000000)
+            if (_keys >= 1e18)
             {
-            updateTimer(_keys, _rID);
+                updateTimer(_keys, _rID);
 
-            // set new leaders
-            if (round_[_rID].plyr != _pID)
-                round_[_rID].plyr = _pID;  
-        }
+                // set new leaders
+                if (round_[_rID].plyr != _pID)
+                    round_[_rID].plyr = _pID;  
+            }
             
             // manage airdrops
-            if (airDropPot_ >= 1000000000000000000)  // 10 eth
+            uint256 currentPlayerMaxId = playerBook.getMaxPID();
+            if (airDropPot_ >= airDropAmountLimit && currentPlayerMaxId >= minPlayerCountForAirdrop)  // airdrop pot 10 eth and players > 30
             {
                 airDropCountTracker_++;
-                // gib muni
-                uint256 _prize;
-                if (_eth >= 10000000000000000000)
-                {
-                    // calculate prize and give it to winner
-                    _prize = ((airDropPot_).mul(75)) / 100;
-                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-                    
-                    // adjust airDropPot 
-                    airDropPot_ = (airDropPot_).sub(_prize);
-                } else if (_eth >= 1000000000000000000 && _eth < 10000000000000000000) {
-                    // calculate prize and give it to winner
-                    _prize = ((airDropPot_).mul(50)) / 100;
-                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-                    
-                    // adjust airDropPot 
-                    airDropPot_ = (airDropPot_).sub(_prize);
-                } else if (_eth >= 100000000000000000 && _eth < 1000000000000000000) {
-                    // calculate prize and give it to winner
-                    _prize = ((airDropPot_).mul(25)) / 100;
-                    plyr_[_pID].win = (plyr_[_pID].win).add(_prize);
-                    
-                    // adjust airDropPot 
-                    airDropPot_ = (airDropPot_).sub(_prize);
+                uint256 _totalPrize = airDropAmountLimit;
+                
+                // airdrop to 10 luck players and give 1 eth per player
+                for (uint256 i = 0;i<10;i++){
+                    uint256 _prize = airDropAmountLimit / 10;
+                    uint256 luckyPid = currentPlayerMaxId / (i + 1);
+                    plyr_[luckyPid].win = (plyr_[luckyPid].win).add(_prize);   
                 }
-                // reset air drop tracker
-                airDropCountTracker_ = 0;
+                
+                airDropPot_ = (airDropPot_).sub(_totalPrize);
             }
             
             // update player 
@@ -904,17 +852,38 @@ contract FoMoLike is F3Devents {
             round_[_rID].eth = _eth.add(round_[_rID].eth);
     
             // distribute eth
-            _eventData_ = distributeExternal(_rID, _pID, _eth, _affID, _eventData_);
+            _eventData_ = distributeExternal(_rID, _pID, _eth, _eventData_);
             _eventData_ = distributeInternal(_rID, _pID, _eth, _keys, _eventData_);
+            
+            updatelastTenPIDs(_pID);
             
             // call end tx function to fire end tx event.
             endTx(_pID, _eth, _keys, _eventData_);
         }
     }
-//==============================================================================
-//     _ _ | _   | _ _|_ _  _ _  .
-//    (_(_||(_|_||(_| | (_)| _\  .
-//==============================================================================
+    
+    function updatelastTenPIDs(uint256 _pID)
+        private
+        returns (bool)
+    {
+        bool isExist = false;
+        for(uint256 i = 9; i>=0;i--){
+            if (lastTenPIDs[i] == _pID){
+                isExist = true;
+                return false;
+            }
+        }
+        if (!isExist){
+            for(uint256 j = 9; j>=0;j--){
+                if ( j > 0)
+                    lastTenPIDs[j] = lastTenPIDs[j - 1];
+            }
+            lastTenPIDs[0] = _pID;
+        }
+        return true;
+    }
+    
+    //==============================================================================
     /**
      * @dev calculates unmasked earnings (just calculates, does not update mask)
      * @return earnings in wei format
@@ -972,23 +941,19 @@ contract FoMoLike is F3Devents {
         else // rounds over.  need price for new round
             return ( (_keys).eth() );
     }
-//==============================================================================
-//    _|_ _  _ | _  .
-//     | (_)(_)|_\  .
+
 //==============================================================================
     /**
      * @dev receives name/player info from names contract 
      */
-    function receivePlayerInfo(uint256 _pID, address _addr, uint256 _laff)
+    function receivePlayerInfo(uint256 _pID, address _addr)
         external
     {
-        require (msg.sender == address(PlayerBook), "your not playerNames contract... hmmm..");
+        require (msg.sender == address(playerBook), "your not playerNames contract... hmmm..");
         if (pIDxAddr_[_addr] != _pID)
             pIDxAddr_[_addr] = _pID;
         if (plyr_[_pID].addr != _addr)
             plyr_[_pID].addr = _addr;
-        if (plyr_[_pID].laff != _laff)
-            plyr_[_pID].laff = _laff;
     }
         
     /**
@@ -1000,21 +965,23 @@ contract FoMoLike is F3Devents {
         returns (F3Ddatasets.EventReturns)
     {
         uint256 _pID = pIDxAddr_[msg.sender];
-        // if player is new to this version of fomo3d
+        // if player is new to this 
         if (_pID == 0)
         {
-            bool isNew;
             // grab their player ID, name and last aff ID, from player names contract 
-            (_pID , isNew) = PlayerBook.getPlayerID(msg.sender);
-            uint256 _laff = PlayerBook.getPlayerLAff(_pID);
+            _pID = playerBook.getPlayerID(msg.sender);
+            uint256 _laff = playerBook.getPlayerLAff(_pID);
+           
             
             // set up player account 
             pIDxAddr_[msg.sender] = _pID;
             plyr_[_pID].addr = msg.sender;
             
             
-            if (_laff != 0 && _laff != _pID)
+            if (_laff != 0 && _laff != _pID &&  plyr_[_pID].laff != 0)
                 plyr_[_pID].laff = _laff;
+            
+            require(plyr_[_pID].laff != 0, "You Must have a affId");
         } 
         return (_eventData_);
     }
@@ -1131,24 +1098,11 @@ contract FoMoLike is F3Devents {
             round_[_rID].end = rndMax_.add(_now);
     }
     
-    /**
-     * @dev generates a random number between 0-99 and checks to see if thats
-     * resulted in an airdrop win
-     * @return do we have a winner?
-     */
-    function airdrop()
-        private 
-        view 
-        returns(bool)
-    {
-        // TODO
-       return false;
-    }
 
     /**
      * @dev distributes eth based on fees to com, aff, and p3d
      */
-    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, F3Ddatasets.EventReturns memory _eventData_)
+    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
         private
         returns(F3Ddatasets.EventReturns)
     {
@@ -1163,12 +1117,13 @@ contract FoMoLike is F3Devents {
         
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
-        if (_affID != _pID) {
+        
+        for(uint256 i = 0;i<10;i++){
+            // reward 9 generations // TODO
+            uint256 _affID = plyr_[_pID].laff;
             plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
             emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, _rID, _pID, _aff, now);
         }
-        
-       
         
         return(_eventData_);
     }
