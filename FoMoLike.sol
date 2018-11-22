@@ -16,8 +16,8 @@ contract F3Devents {
     // fired at end of buy or reload
     event onEndTx
     (
-        uint256 compressedData,     
-        uint256 compressedIDs,      
+        // uint256 compressedData,     
+        // uint256 compressedIDs,      
         address playerAddress,
         uint256 ethIn,
         uint256 keysBought,
@@ -45,8 +45,8 @@ contract F3Devents {
         address playerAddress,
         bytes32 playerName,
         uint256 ethOut,
-        uint256 compressedData,
-        uint256 compressedIDs,
+        // uint256 compressedData,
+        // uint256 compressedIDs,
         address winnerAddr,
         bytes32 winnerName,
         uint256 amountWon,
@@ -62,8 +62,8 @@ contract F3Devents {
         address playerAddress,
         bytes32 playerName,
         uint256 ethIn,
-        uint256 compressedData,
-        uint256 compressedIDs,
+        // uint256 compressedData,
+        // uint256 compressedIDs,
         address winnerAddr,
         bytes32 winnerName,
         uint256 amountWon,
@@ -78,8 +78,8 @@ contract F3Devents {
     (
         address playerAddress,
         bytes32 playerName,
-        uint256 compressedData,
-        uint256 compressedIDs,
+        // uint256 compressedData,
+        // uint256 compressedIDs,
         address winnerAddr,
         bytes32 winnerName,
         uint256 amountWon,
@@ -101,28 +101,9 @@ contract F3Devents {
 }
 
 library F3Ddatasets {
-    //compressedData key
-    // [76-33][32][31][30][29][28-18][17][16-6][5-3][2][1][0]
-        // 0 - new player (bool)
-        // 1 - joined round (bool)
-        // 2 - new  leader (bool)
-        // 3-5 - air drop tracker (uint 0-999)
-        // 6-16 - round end time
-        // 17 - winnerTeam
-        // 18 - 28 timestamp 
-        // 29 - team
-        // 30 - 0 = reinvest (round), 1 = buy (round), 2 = buy (ico), 3 = reinvest (ico)
-        // 31 - airdrop happened bool
-        // 32 - airdrop tier 
-        // 33 - airdrop amount won
-    //compressedIDs key
-    // [77-52][51-26][25-0]
-        // 0-25 - pID 
-        // 26-51 - winPID
-        // 52-77 - rID
     struct EventReturns {
-        uint256 compressedData;
-        uint256 compressedIDs;
+        // uint256 compressedData;
+        // uint256 compressedIDs;
         address winnerAddr;         // winner address
         uint256 amountWon;          // amount won
         uint256 newPot;             // amount in new pot
@@ -141,24 +122,20 @@ library F3Ddatasets {
         uint256 eth;    // eth player has added to round (used for eth limiter)
         uint256 keys;   // keys
         uint256 mask;   // player mask 
-        uint256 ico;    // ICO phase investment
     }
     struct Round {
-        uint256 plyr;   // pID of player in lead， lead领导吗？
+        uint256 plyr;   // pID of player in lead
         uint256 end;    // time ends/ended
-        bool ended;     // has round end function been ran  这个开关值得研究下
+        bool ended;     // has round end function been ran
         uint256 strt;   // time round started
         uint256 keys;   // keys
         uint256 eth;    // total eth in
         uint256 pot;    // eth to pot (during round) / final amount paid to winner (after round ends)
         uint256 mask;   // global mask
-        uint256 ico;    // total eth sent in during ICO phase
-        uint256 icoGen; // total eth for gen during ICO phase
-        uint256 icoAvg; // average key price for ICO phase
     }
     struct PotSplit {
         uint256 gen;    // % of pot thats paid to key holders of current round
-        uint256 team;    // % of pot thats paid to p3d holders
+        uint256 team;    // % of pot thats paid to team holders
     }
 }
 contract PlayerBook {
@@ -187,7 +164,23 @@ contract PlayerBook {
         plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
         pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
         
+        plyr_[5].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
+        pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 5;
+        
+        plyr_[6].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
+        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 6;
+        
+        plyr_[7].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
+        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 7;
+        
+        plyr_[8].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
+        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 8;
         pID_ = 4;
+        
+        plyr_[9].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
+        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 9;
+        
+        pID_ = 9;
     }
 
 //==============================================================================
@@ -261,10 +254,10 @@ contract FoMoLike {
 //==============================================================================
 // (data used to store game info that changes)
 //=============================|================================================
-    uint256 public airDropPot_;             // person who gets the airdrop wins part of this pot
-    uint256 public airDropTracker_ = 0;     // incremented each time a "qualified" tx occurs.  used to determine winning air drop
-    uint256 public rID_;    // round id number / total rounds that have happened
-    uint256 public initKeyPrice = 75000000000000;
+    uint256 public airDropPot_;                     // person who gets the airdrop wins part of this pot
+    uint256 public airDropCountTracker_ = 0;        // incremented each time a "qualified" tx occurs.  used to determine winning air drop
+    uint256 public rID_;                            // round id number / total rounds that have happened
+    uint256 public initKeyPrice = 1000000000000000;
 
 //****************
 // PLAYER DATA 
@@ -289,11 +282,7 @@ contract FoMoLike {
         public
     {
         // how to split up the final pot based on which team was picked
-        // (F3D, P3D)
         potSplit_[0] = F3Ddatasets.PotSplit(15,10);  //48% to winner, 25% to next round, 2% to com
-        potSplit_[1] = F3Ddatasets.PotSplit(25,0);   //48% to winner, 25% to next round, 2% to com
-        potSplit_[2] = F3Ddatasets.PotSplit(20,20);  //48% to winner, 10% to next round, 2% to com
-        potSplit_[3] = F3Ddatasets.PotSplit(30,10);  //48% to winner, 10% to next round, 2% to com
     }
 //==============================================================================
     modifier isActivated() {
@@ -537,16 +526,12 @@ contract FoMoLike {
                 plyr_[_pID].addr.transfer(_eth);    
             
             // build event data
-            _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
-            _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
             
             // fire withdraw and distribute event
             emit F3Devents.onWithdrawAndDistribute
             (
                 msg.sender, 
                 _eth, 
-                _eventData_.compressedData, 
-                _eventData_.compressedIDs, 
                 _eventData_.winnerAddr, 
                 _eventData_.amountWon, 
                 _eventData_.newPot, 
@@ -696,7 +681,6 @@ contract FoMoLike {
     /**
      * @dev returns all current round info needed for front end
      * -functionhash- 0x747dff42
-     * @return eth invested during ICO phase
      * @return round id 
      * @return total keys for round 
      * @return time round ends
@@ -704,37 +688,26 @@ contract FoMoLike {
      * @return current pot 
      * @return current team ID & player ID in lead 
      * @return current player in leads address 
-     * @return current player in leads name
-     * @return whales eth in for round
-     * @return bears eth in for round
-     * @return sneks eth in for round
-     * @return bulls eth in for round
      * @return airdrop tracker # & airdrop pot
      */
     function getCurrentRoundInfo()
         public
         view
-        returns(uint256, uint256, uint256, uint256, uint256, uint256, uint256, address, bytes32, uint256, uint256, uint256, uint256, uint256)
+        returns(uint256, uint256, uint256, uint256, uint256, uint256, address, uint256)
     {
         // setup local rID
         uint256 _rID = rID_;
         
         return
         (
-            round_[_rID].ico,               //0
-            _rID,                           //1
-            round_[_rID].keys,              //2
-            round_[_rID].end,               //3
-            round_[_rID].strt,              //4
-            round_[_rID].pot,               //5
-            (round_[_rID].team + (round_[_rID].plyr * 10)),     //6
-            plyr_[round_[_rID].plyr].addr,  //7
-            plyr_[round_[_rID].plyr].name,  //8
-            rndTmEth_[_rID][0],             //9
-            rndTmEth_[_rID][1],             //10
-            rndTmEth_[_rID][2],             //11
-            rndTmEth_[_rID][3],             //12
-            airDropTracker_ + (airDropPot_ * 1000)              //13
+            _rID,                                               //1
+            round_[_rID].keys,                                  //2
+            round_[_rID].end,                                   //3
+            round_[_rID].strt,                                  //4
+            round_[_rID].pot,                                   //5
+            round_[_rID].plyr,                                  //6
+            plyr_[round_[_rID].plyr].addr,                      //7
+            airDropCountTracker_ + (airDropPot_ * 1000)              //8
         );
     }
 
@@ -810,8 +783,8 @@ contract FoMoLike {
                 _eventData_ = endRound(_eventData_);
                 
                 // build event data
-                _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
-                _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
+                // _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
+                // _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
                 
                 // fire buy and distribute event 
                 emit F3Devents.onBuyAndDistribute
@@ -819,8 +792,8 @@ contract FoMoLike {
                     msg.sender, 
                     plyr_[_pID].name, 
                     msg.value, 
-                    _eventData_.compressedData, 
-                    _eventData_.compressedIDs, 
+                    // _eventData_.compressedData, 
+                    // _eventData_.compressedIDs, 
                     _eventData_.winnerAddr, 
                     _eventData_.winnerName, 
                     _eventData_.amountWon, 
@@ -866,16 +839,16 @@ contract FoMoLike {
             _eventData_ = endRound(_eventData_);
                 
             // build event data
-            _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
-            _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
+            // _eventData_.compressedData = _eventData_.compressedData + (_now * 1000000000000000000);
+            // _eventData_.compressedIDs = _eventData_.compressedIDs + _pID;
                 
             // fire buy and distribute event 
             emit F3Devents.onReLoadAndDistribute
             (
                 msg.sender, 
                 plyr_[_pID].name, 
-                _eventData_.compressedData, 
-                _eventData_.compressedIDs, 
+                // _eventData_.compressedData, 
+                // _eventData_.compressedIDs, 
                 _eventData_.winnerAddr, 
                 _eventData_.winnerName, 
                 _eventData_.amountWon, 
@@ -925,15 +898,13 @@ contract FoMoLike {
                 round_[_rID].team = _team; 
             
             // set the new leader bool to true
-            _eventData_.compressedData = _eventData_.compressedData + 100;
+            // _eventData_.compressedData = _eventData_.compressedData + 100;
         }
             
             // manage airdrops
-            if (_eth >= 100000000000000000)
+            if (airDropPot_ >= 1000000000000000000)  // 10 eth
             {
-            airDropTracker_++;
-            if (airdrop() == true)
-            {
+                airDropCountTracker_++;
                 // gib muni
                 uint256 _prize;
                 if (_eth >= 10000000000000000000)
@@ -946,7 +917,7 @@ contract FoMoLike {
                     airDropPot_ = (airDropPot_).sub(_prize);
                     
                     // let event know a tier 3 prize was won 
-                    _eventData_.compressedData += 300000000000000000000000000000000;
+                    // _eventData_.compressedData += 300000000000000000000000000000000;
                 } else if (_eth >= 1000000000000000000 && _eth < 10000000000000000000) {
                     // calculate prize and give it to winner
                     _prize = ((airDropPot_).mul(50)) / 100;
@@ -956,7 +927,7 @@ contract FoMoLike {
                     airDropPot_ = (airDropPot_).sub(_prize);
                     
                     // let event know a tier 2 prize was won 
-                    _eventData_.compressedData += 200000000000000000000000000000000;
+                    // _eventData_.compressedData += 200000000000000000000000000000000;
                 } else if (_eth >= 100000000000000000 && _eth < 1000000000000000000) {
                     // calculate prize and give it to winner
                     _prize = ((airDropPot_).mul(25)) / 100;
@@ -966,20 +937,19 @@ contract FoMoLike {
                     airDropPot_ = (airDropPot_).sub(_prize);
                     
                     // let event know a tier 3 prize was won 
-                    _eventData_.compressedData += 300000000000000000000000000000000;
+                    // _eventData_.compressedData += 300000000000000000000000000000000;
                 }
                 // set airdrop happened bool to true
-                _eventData_.compressedData += 10000000000000000000000000000000;
+                // _eventData_.compressedData += 10000000000000000000000000000000;
                 // let event know how much was won 
-                _eventData_.compressedData += _prize * 1000000000000000000000000000000000;
+                // _eventData_.compressedData += _prize * 1000000000000000000000000000000000;
                 
                 // reset air drop tracker
-                airDropTracker_ = 0;
+                airDropCountTracker_ = 0;
             }
-        }
     
             // store the air drop tracker number (number of buys since last airdrop)
-            _eventData_.compressedData = _eventData_.compressedData + (airDropTracker_ * 1000);
+            // _eventData_.compressedData = _eventData_.compressedData + (airDropCountTracker_ * 1000);
             
             // update player 
             plyrRnds_[_pID][_rID].keys = _keys.add(plyrRnds_[_pID][_rID].keys);
@@ -1103,7 +1073,7 @@ contract FoMoLike {
                 plyr_[_pID].laff = _laff;
             
             // set the new player bool to true
-            _eventData_.compressedData = _eventData_.compressedData + 1;
+            // _eventData_.compressedData = _eventData_.compressedData + 1;
         } 
         return (_eventData_);
     }
@@ -1125,7 +1095,7 @@ contract FoMoLike {
         plyr_[_pID].lrnd = rID_;
             
         // set the joined round bool to true
-        _eventData_.compressedData = _eventData_.compressedData + 10;
+        // _eventData_.compressedData = _eventData_.compressedData + 10;
         
         return(_eventData_);
     }
@@ -1173,8 +1143,8 @@ contract FoMoLike {
         // send share for p3d to divies
             
         // prepare event data
-        _eventData_.compressedData = _eventData_.compressedData + (round_[_rID].end * 1000000);
-        _eventData_.compressedIDs = _eventData_.compressedIDs + (_winPID * 100000000000000000000000000) + (_winTID * 100000000000000000);
+        // _eventData_.compressedData = _eventData_.compressedData + (round_[_rID].end * 1000000);
+        // _eventData_.compressedIDs = _eventData_.compressedIDs + (_winPID * 100000000000000000000000000) + (_winTID * 100000000000000000);
         _eventData_.winnerAddr = plyr_[_winPID].addr;
         _eventData_.amountWon = _win;
         _eventData_.genAmount = _gen;
@@ -1377,13 +1347,13 @@ contract FoMoLike {
     function endTx(uint256 _pID, uint256 _eth, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
         private
     {
-        _eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (_team * 100000000000000000000000000000);
-        _eventData_.compressedIDs = _eventData_.compressedIDs + _pID + (rID_ * 10000000000000000000000000000000000000000000000000000);
+        // _eventData_.compressedData = _eventData_.compressedData + (now * 1000000000000000000) + (_team * 100000000000000000000000000000);
+        // _eventData_.compressedIDs = _eventData_.compressedIDs + _pID + (rID_ * 10000000000000000000000000000000000000000000000000000);
         
         emit F3Devents.onEndTx
         (
-            _eventData_.compressedData,
-            _eventData_.compressedIDs,
+            // _eventData_.compressedData,
+            // _eventData_.compressedIDs,
             msg.sender,
             _eth,
             _keys,
