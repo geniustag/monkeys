@@ -1098,6 +1098,13 @@ contract FoMoLike is F3Devents {
             round_[_rID].end = rndMax_.add(_now);
     }
     
+    function validAffId(uint256 affID)
+        private 
+        view
+        returns (bool)
+    {
+        return affID > 0 && plyr_[affID].addr != address(0);
+    }
 
     /**
      * @dev distributes eth based on fees to com, aff, and p3d
@@ -1106,23 +1113,26 @@ contract FoMoLike is F3Devents {
         private
         returns(F3Ddatasets.EventReturns)
     {
-        // pay 2% out to community rewards
-        uint256 _com = _eth / 50;
-        
-        // pay 1% out to FoMo3D short
-        uint256 _long = _eth / 100;
-        
         // distribute share to affiliate
         uint256 _aff = _eth / 10;
-        
-        // decide what to do with affiliate share of fees
-        // affiliate must not be self, and must have a name registered
-        
-        for(uint256 i = 0;i<10;i++){
-            // reward 9 generations // TODO
-            uint256 _affID = plyr_[_pID].laff;
-            plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
-            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, _rID, _pID, _aff, now);
+        uint256 _affID = plyr_[_pID].laff;
+        for(uint256 i = 1;i<=9;i++){
+            // reward 9 generations 
+            if (i >= 2){
+                _affID = plyr_[_affID].laff;
+                
+                if (i >= 2 && i <= 4){
+                    // pay 5% to 2-4
+                    _aff = _eth / 20;
+                } else if (i >= 5 && i<= 9) {
+                    // pay 2% to 5-9
+                    _aff = _eth / 50;
+                }
+            }
+            if (validAffId(_affID)) {
+                plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
+                emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, _rID, _pID, _aff, now);
+            }
         }
         
         return(_eventData_);
@@ -1135,18 +1145,18 @@ contract FoMoLike is F3Devents {
         private
         returns(F3Ddatasets.EventReturns)
     {
-        // calculate gen share
+        // calculate gen share 40%
         uint256 _gen = (_eth.mul(potSplit.allBonus)) / 100;
         
-        // toss 1% into airdrop pot 
-        uint256 _air = (_eth / 100);
+        // 2% into airdrop pot 
+        uint256 _air = (_eth.mul(potSplit.airdrop) / 100);
         airDropPot_ = airDropPot_.add(_air);
         
-        // update eth balance (eth = eth - (com share + pot swap share + aff share + p3d share + airdrop pot share))
-        _eth = _eth.sub(((_eth.mul(14)) / 100).add((_eth.mul(potSplit.initialTeams)) / 100));
+        // update eth balance (eth = eth - (initialTeams share + aff share + airdrop pot share))
+        // _eth = _eth.sub(((_eth.mul(potSplit.affiliateBonus)) / 100).add((_eth.mul(potSplit.initialTeams)) / 100));
 
         // calculate pot 
-        uint256 _pot = _eth.sub(_gen);
+        uint256 _pot = (_eth.mul(potSplit.bigPot)) / 100 ;// _eth.sub(_gen);
         
         // distribute gen share (thats what updateMasks() does) and adjust
         // balances for dust.
