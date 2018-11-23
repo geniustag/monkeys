@@ -1,9 +1,9 @@
 pragma solidity ^0.4.24;
 
 import "./SafeMath.sol";
-import "./F3DKeysCalcLong.sol";
+import "./LuckyDogKeysCalcLong.sol";
 
-contract F3Devents {
+contract LuckyDogevents {
     // fired whenever a player registers a name
     event onNewPlayer
     (
@@ -89,7 +89,7 @@ contract F3Devents {
     );
 }
 
-library F3Ddatasets {
+library LuckyDogdatasets {
     struct EventReturns {
         address winnerAddr;         // winner address
         uint256 amountWon;          // amount won
@@ -105,6 +105,7 @@ library F3Ddatasets {
         uint256 aff;    // affiliate vault
         uint256 lrnd;   // last round played
         uint256 laff;   // last affiliate id used
+        uint256[] subPlys;   // childPIDs
     }
     struct PlayerRounds {
         uint256 eth;    // eth player has added to round (used for eth limiter)
@@ -112,6 +113,7 @@ library F3Ddatasets {
         uint256 mask;   // player mask 
     }
     struct Round {
+        mapping (uint256 => uint256) lastTenPIDs;
         uint256 plyr;   // pID of player in lead
         uint256 end;    // time ends/ended
         bool ended;     // has round end function been ran
@@ -139,6 +141,7 @@ contract PlayerBook {
     struct Player {
         address addr;
         uint256 laff;
+        uint256[] subPlys;
     }
     constructor()
         public
@@ -184,8 +187,10 @@ contract PlayerBook {
             pIDxAddr_[_addr] = pID_;
             plyr_[pID_].addr = _addr;
             require (affID > 0 && plyr_[affID].addr != address(0), "Invalid affId");
-            if (plyr_[pID_].laff != 0)
+            if (plyr_[pID_].laff != 0){
                 plyr_[pID_].laff = affID;
+                plyr_[affID].subPlys.push(pID_);
+            }
             return (true);
         } else {
             return (false);
@@ -225,6 +230,14 @@ contract PlayerBook {
         return (plyr_[_pID].addr);
     }
     
+    function getPlayerSubPlys(uint256 _pID)
+        external
+        view 
+        returns(uint256[])
+    {
+        return plyr_[_pID].subPlys;
+    }
+    
     function getMaxPID() 
         external
         view
@@ -241,18 +254,19 @@ interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
     function getPlayerLAff(uint256 _pID) external view returns (uint256);
     function getPlayerAddr(uint256 _pID) external view returns (address);
+    function getPlayerSubPlys(uint256 _pID) external view returns (uint256[]);
 }
 
-contract FoMoLike is F3Devents {
+contract LuckDog is LuckyDogevents {
     using SafeMath for *;
-    using F3DKeysCalcLong for uint256;
+    using LuckyDogKeysCalcLong for uint256;
     
-    // otherFoMo3D private otherF3D_;
+    // otherFoMo3D private otherLuckyDog_;
     PlayerBookInterface constant private playerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
     //==============================================================================
     // (game settings)
     //=================_|===========================================================
-    string constant public name = "Monkey";
+    string constant public name = "Luck Dog";
     string constant public symbol = "MK";
     uint256 private rndExtra_ = 10 minutes;     // length of the very first ICO 
     uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
@@ -269,29 +283,31 @@ contract FoMoLike is F3Devents {
     uint256 public airDropPot_;                     // person who gets the airdrop wins part of this pot
     uint256 public airDropCountTracker_ = 0;        // incremented each time a "qualified" tx occurs.  used to determine winning air drop
     uint256 public rID_;                            // round id number / total rounds that have happened
+    uint256 public maxNoAffProfitRate = 130;
+    uint256 public maxHasChildProfitRate = 500;
 
     //****************
     // PLAYER DATA 
     //****************
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
-    mapping (uint256 => F3Ddatasets.Player) public plyr_;   // (pID => data) player data
-    mapping (uint256 => mapping (uint256 => F3Ddatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
+    mapping (uint256 => LuckyDogdatasets.Player) public plyr_;   // (pID => data) player data
+    mapping (uint256 => mapping (uint256 => LuckyDogdatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
     
     //****************
     // ROUND DATA 
     //****************
-    mapping (uint256 => F3Ddatasets.Round) public round_;   // (rID => data) round data
+    mapping (uint256 => LuckyDogdatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
-    mapping (uint256 => uint256) public lastTenPIDs;
+    // mapping (uint256 => uint256) public lastTenPIDs;
     
-    F3Ddatasets.SplitRates public potSplit;
+    LuckyDogdatasets.SplitRates public potSplit;
     
     // deploy
     constructor()
         public
     {
         // 40% to for all keys holders, 35% to affiliates, 18% to big reward pot, 2% to airdrop pot, 5% to initialTeams;    
-        potSplit = F3Ddatasets.SplitRates(40,35,18,2,5);
+        potSplit = LuckyDogdatasets.SplitRates(40,35,18,2,5);
     }
     
     //==============================================================================
@@ -341,7 +357,7 @@ contract FoMoLike is F3Devents {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        LuckyDogdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
             
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -374,7 +390,7 @@ contract FoMoLike is F3Devents {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        LuckyDogdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
         uint256 _pID = pIDxAddr_[msg.sender];
         
         buyCore(_pID, _eventData_);
@@ -389,7 +405,7 @@ contract FoMoLike is F3Devents {
         payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        LuckyDogdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
         
         uint256 _pID = pIDxAddr_[msg.sender];
         
@@ -418,7 +434,7 @@ contract FoMoLike is F3Devents {
         // require (withdrawEarnings(_pID) > _eth, "You have to send a vaid amount eth ... ");
         
         // set up our tx event data
-        F3Ddatasets.EventReturns memory _eventData_;
+        LuckyDogdatasets.EventReturns memory _eventData_;
         
         // manage affiliate residuals
         // if no affiliate code was given or player tried to use their own, lolz
@@ -443,7 +459,7 @@ contract FoMoLike is F3Devents {
         // require (withdrawEarnings(_pID) > _eth, "You have to send a vaid amount eth ... ");
 
         // set up our tx event data
-        F3Ddatasets.EventReturns memory _eventData_;
+        LuckyDogdatasets.EventReturns memory _eventData_;
 
         // manage affiliate residuals
         uint256 _affID;
@@ -484,7 +500,7 @@ contract FoMoLike is F3Devents {
         if (_now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
         {
             // set up our tx event data
-            F3Ddatasets.EventReturns memory _eventData_;
+            LuckyDogdatasets.EventReturns memory _eventData_;
             
             // end the round (distributes pot)
             round_[_rID].ended = true;
@@ -500,7 +516,7 @@ contract FoMoLike is F3Devents {
             // build event data
             
             // fire withdraw and distribute event
-            emit F3Devents.onWithdrawAndDistribute
+            emit LuckyDogevents.onWithdrawAndDistribute
             (
                 msg.sender, 
                 _eth, 
@@ -521,7 +537,7 @@ contract FoMoLike is F3Devents {
                 plyr_[_pID].addr.transfer(_eth);
             
             // fire withdraw event
-            // emit F3Devents.onWithdraw(_pID, msg.sender, _eth, _now);
+            // emit LuckyDogevents.onWithdraw(_pID, msg.sender, _eth, _now);
         }
     }
 
@@ -575,6 +591,25 @@ contract FoMoLike is F3Devents {
             return(0);
     }
     
+    function checkPlyrMaxProfit(uint256 _pID, uint256 _rID, uint256 _profit)
+        public
+        view
+        returns(bool, uint256)
+    {
+        if (_pID <= 9) {
+            return (false, 100000000000000000000000000);
+        } // except init teams
+        
+        uint256 plyInvestedEths = plyrRnds_[_pID][_rID].eth;
+        uint256 plyEthsWithProfits = plyInvestedEths.add(plyr_[_pID].win).add(plyr_[_pID].gen).add(plyr_[_pID].aff).add(_profit);
+        
+        if (plyr_[_pID].subPlys.length >= 1){
+            return (plyEthsWithProfits.mul(100) <= plyInvestedEths.mul(maxNoAffProfitRate), _profit.sub(plyInvestedEths.mul(maxNoAffProfitRate) - plyEthsWithProfits.mul(100)));
+        }
+        
+        return (plyEthsWithProfits.mul(100) <= plyInvestedEths.mul(maxHasChildProfitRate), _profit.sub(plyInvestedEths.mul(maxHasChildProfitRate) - plyEthsWithProfits.mul(100))); 
+    }
+    
     /**
      * @dev returns player earnings per vaults 
      * -functionhash- 0x63066434
@@ -591,18 +626,18 @@ contract FoMoLike is F3Devents {
         uint256 _rID = rID_;
         
         // if round has ended.  but round end has not been run (so contract has not distributed winnings)
-        if (now > round_[_rID].end && round_[_rID].ended == false && round_[_rID].plyr != 0)
+        if (now > round_[_rID].end && round_[_rID].ended == false)
         {
-            // if player is winner 
-            if (round_[_rID].plyr == _pID)
+            // if player in lastTenPIDs 
+            if (isInLuckyPot(_rID, _pID))
             {
                 return
                 (
-                    (plyr_[_pID].win).add( ((round_[_rID].pot).mul(48)) / 100 ),
+                    (plyr_[_pID].win).add( ((round_[_rID].pot).mul(10)) / 100 ),
                     (plyr_[_pID].gen).add(  getPlayerVaultsHelper(_pID, _rID).sub(plyrRnds_[_pID][_rID].mask)   ),
                     plyr_[_pID].aff
                 );
-            // if player is not the winner
+            // if player is not in lastTenPIDs
             } else {
                 return
                 (
@@ -631,7 +666,7 @@ contract FoMoLike is F3Devents {
         view
         returns(uint256)
     {
-        return(  ((((round_[_rID].mask).add(((((round_[_rID].pot).mul(potSplit.allBonus)) / 100).mul(1000000000000000000)) / (round_[_rID].keys))).mul(plyrRnds_[_pID][_rID].keys)) / 1000000000000000000)  );
+        return  (round_[_rID].mask).mul(plyrRnds_[_pID][_rID].keys) / 1000000000000000000 ;
     }
     
     /**
@@ -712,8 +747,8 @@ contract FoMoLike is F3Devents {
      * @dev logic runs whenever a buy order is executed.  determines how to handle 
      * incoming eth depending on if we are in an active round or not
      */
-    // function buyCore(uint256 _pID, uint256 _affID, F3Ddatasets.EventReturns memory _eventData_)
-    function buyCore(uint256 _pID, F3Ddatasets.EventReturns memory _eventData_)
+    // function buyCore(uint256 _pID, uint256 _affID, LuckyDogdatasets.EventReturns memory _eventData_)
+    function buyCore(uint256 _pID, LuckyDogdatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -738,7 +773,7 @@ contract FoMoLike is F3Devents {
                 _eventData_ = endRound(_eventData_);
                 
                 // fire buy and distribute event 
-                emit F3Devents.onBuyAndDistribute
+                emit LuckyDogevents.onBuyAndDistribute
                 (
                     msg.sender, 
                     msg.value, 
@@ -759,7 +794,7 @@ contract FoMoLike is F3Devents {
      * @dev logic runs whenever a reload order is executed.  determines how to handle 
      * incoming eth depending on if we are in an active round or not 
      */
-    function reLoadCore(uint256 _pID, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
+    function reLoadCore(uint256 _pID, uint256 _eth, LuckyDogdatasets.EventReturns memory _eventData_)
         private
     {
         // setup local rID
@@ -786,7 +821,7 @@ contract FoMoLike is F3Devents {
             _eventData_ = endRound(_eventData_);
                 
             // fire buy and distribute event 
-            emit F3Devents.onReLoadAndDistribute
+            emit LuckyDogevents.onReLoadAndDistribute
             (
                 msg.sender, 
                 _eventData_.winnerAddr, 
@@ -802,7 +837,7 @@ contract FoMoLike is F3Devents {
      * @dev this is the core logic for any buy/reload that happens while a round 
      * is live.
      */
-    function core(uint256 _rID, uint256 _pID, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
+    function core(uint256 _rID, uint256 _pID, uint256 _eth, LuckyDogdatasets.EventReturns memory _eventData_)
         private
     {
         // if player is new to round
@@ -837,7 +872,14 @@ contract FoMoLike is F3Devents {
                 for (uint256 i = 0;i<10;i++){
                     uint256 _prize = airDropAmountLimit / 10;
                     uint256 luckyPid = currentPlayerMaxId / (i + 1);
-                    plyr_[luckyPid].win = (plyr_[luckyPid].win).add(_prize);   
+                    (bool isMaxPrft, uint256 maxPrft) = checkPlyrMaxProfit(luckyPid, _rID, _prize);
+                    if (isMaxPrft){
+                        _totalPrize = _totalPrize.sub(_prize.sub(maxPrft));
+                        _prize = maxPrft;
+                    } else {   
+                    }  
+                    
+                    plyr_[luckyPid].win = (plyr_[luckyPid].win).add(_prize); 
                 }
                 
                 airDropPot_ = (airDropPot_).sub(_totalPrize);
@@ -855,32 +897,40 @@ contract FoMoLike is F3Devents {
             _eventData_ = distributeExternal(_rID, _pID, _eth, _eventData_);
             _eventData_ = distributeInternal(_rID, _pID, _eth, _keys, _eventData_);
             
-            updatelastTenPIDs(_pID);
+            updatelastTenPIDs(_rID, _pID);
             
             // call end tx function to fire end tx event.
             endTx(_pID, _eth, _keys, _eventData_);
         }
     }
     
-    function updatelastTenPIDs(uint256 _pID)
+    function updatelastTenPIDs(uint256 _rID, uint256 _pID)
         private
         returns (bool)
     {
-        bool isExist = false;
-        for(uint256 i = 9; i>=0;i--){
-            if (lastTenPIDs[i] == _pID){
-                isExist = true;
-                return false;
-            }
-        }
+        bool isExist = isInLuckyPot(_rID, _pID);
         if (!isExist){
             for(uint256 j = 9; j>=0;j--){
                 if ( j > 0)
-                    lastTenPIDs[j] = lastTenPIDs[j - 1];
+                    round_[_rID].lastTenPIDs[j] =  round_[_rID].lastTenPIDs[j - 1];
             }
-            lastTenPIDs[0] = _pID;
+            round_[_rID].lastTenPIDs[0] = _pID;
+            return true;
         }
-        return true;
+        return false;
+    }
+    
+    function isInLuckyPot(uint256 _rID, uint256 _pID)
+        private
+        view
+        returns(bool)
+    {
+        for(uint256 i = 9; i>=0;i--){
+            if (round_[_rID].lastTenPIDs[i] == _pID){
+                return true;
+            }
+        }
+        return false;
     }
     
     //==============================================================================
@@ -960,9 +1010,9 @@ contract FoMoLike is F3Devents {
      * @dev gets existing or registers new pID.  use this when a player may be new
      * @return pID 
      */
-    function determinePID(F3Ddatasets.EventReturns memory _eventData_)
+    function determinePID(LuckyDogdatasets.EventReturns memory _eventData_)
         private
-        returns (F3Ddatasets.EventReturns)
+        returns (LuckyDogdatasets.EventReturns)
     {
         uint256 _pID = pIDxAddr_[msg.sender];
         // if player is new to this 
@@ -971,7 +1021,7 @@ contract FoMoLike is F3Devents {
             // grab their player ID, name and last aff ID, from player names contract 
             _pID = playerBook.getPlayerID(msg.sender);
             uint256 _laff = playerBook.getPlayerLAff(_pID);
-           
+           plyr_[_laff].subPlys = playerBook.getPlayerSubPlys(_laff);
             
             // set up player account 
             pIDxAddr_[msg.sender] = _pID;
@@ -990,9 +1040,9 @@ contract FoMoLike is F3Devents {
      * @dev decides if round end needs to be run & new round started.  and if 
      * player unmasked earnings from previously played rounds need to be moved.
      */
-    function managePlayer(uint256 _pID, F3Ddatasets.EventReturns memory _eventData_)
+    function managePlayer(uint256 _pID, LuckyDogdatasets.EventReturns memory _eventData_)
         private
-        returns (F3Ddatasets.EventReturns)
+        returns (LuckyDogdatasets.EventReturns)
     {
         // if player has played a previous round, move their unmasked earnings
         // from that round to gen vault.
@@ -1008,9 +1058,9 @@ contract FoMoLike is F3Devents {
     /**
      * @dev ends the round. manages paying out winner/splitting up pot
      */
-    function endRound(F3Ddatasets.EventReturns memory _eventData_)
+    function endRound(LuckyDogdatasets.EventReturns memory _eventData_)
         private
-        returns (F3Ddatasets.EventReturns)
+        returns (LuckyDogdatasets.EventReturns)
     {
         // setup local rID
         uint256 _rID = rID_;
@@ -1021,40 +1071,22 @@ contract FoMoLike is F3Devents {
         // grab our pot amount
         uint256 _pot = round_[_rID].pot;
         
-        // calculate our winner share, community rewards, gen share, 
-        // p3d share, and amount reserved for next pot 
-        uint256 _win = (_pot.mul(48)) / 100;
-        uint256 _com = (_pot / 50);
-        uint256 _gen = (_pot.mul(potSplit.allBonus)) / 100;
-        uint256 _initTeams = (_pot.mul(potSplit.initialTeams)) / 100;
-        uint256 _res = (((_pot.sub(_win)).sub(_com)).sub(_gen)).sub(_initTeams);
+        uint256 _win = _pot/ 10;
         
-        // calculate ppt for round mask
-        uint256 _ppt = (_gen.mul(1000000000000000000)) / (round_[_rID].keys);
-        uint256 _dust = _gen.sub((_ppt.mul(round_[_rID].keys)) / 1000000000000000000);
-        if (_dust > 0)
-        {
-            _gen = _gen.sub(_dust);
-            _res = _res.add(_dust);
+        // pay our 10 lucky dogs
+        for(uint256 j = 0; j<10;j--){
+            LuckyDogdatasets.Player storage pl = plyr_[round_[_rID].lastTenPIDs[j]];
+            pl.win =  pl.win.add(_win);
         }
-        
-        // pay our winner
-        plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
-        
-        // distribute gen portion to key holders
-        round_[_rID].mask = _ppt.add(round_[_rID].mask);
 
         _eventData_.winnerAddr = plyr_[_winPID].addr;
         _eventData_.amountWon = _win;
-        _eventData_.genAmount = _gen;
-        _eventData_.newPot = _res;
         
         // start next round
         rID_++;
         _rID++;
         round_[_rID].strt = now;
         round_[_rID].end = now.add(rndInit_).add(rndGap_);
-        round_[_rID].pot = _res;
         
         return(_eventData_);
     }
@@ -1109,11 +1141,11 @@ contract FoMoLike is F3Devents {
     /**
      * @dev distributes eth based on fees to com, aff, and p3d
      */
-    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, F3Ddatasets.EventReturns memory _eventData_)
+    function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, LuckyDogdatasets.EventReturns memory _eventData_)
         private
-        returns(F3Ddatasets.EventReturns)
+        returns(LuckyDogdatasets.EventReturns)
     {
-        // distribute share to affiliate
+        // 35% share to affiliate // 10% to 1, 5% tp 2-4, 2% to 5-9
         uint256 _aff = _eth / 10;
         uint256 _affID = plyr_[_pID].laff;
         for(uint256 i = 1;i<=9;i++){
@@ -1130,20 +1162,29 @@ contract FoMoLike is F3Devents {
                 }
             }
             if (validAffId(_affID)) {
+                (bool isMaxPrft, uint256 maxPrft) = checkPlyrMaxProfit(_affID, _rID, _aff);
+                if (isMaxPrft){
+                    _aff = maxPrft;
+                }
                 plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
-                emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, _rID, _pID, _aff, now);
+                emit LuckyDogevents.onAffiliatePayout(_affID, plyr_[_affID].addr, _rID, _pID, _aff, now);
             }
         }
         
+        // 5% to initialTeams
+        uint256 _initTeamReward = (_eth.mul(potSplit.initialTeams)) / 100;
+        for(uint256 j=1;j<=9;j++){
+            plyr_[i].gen = plyr_[i].gen.add(_initTeamReward / 9);
+        }
         return(_eventData_);
     }
     
     /**
      * @dev distributes eth based on fees to gen and pot
      */
-    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
+    function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _keys, LuckyDogdatasets.EventReturns memory _eventData_)
         private
-        returns(F3Ddatasets.EventReturns)
+        returns(LuckyDogdatasets.EventReturns)
     {
         // calculate gen share 40%
         uint256 _gen = (_eth.mul(potSplit.allBonus)) / 100;
@@ -1155,7 +1196,7 @@ contract FoMoLike is F3Devents {
         // update eth balance (eth = eth - (initialTeams share + aff share + airdrop pot share))
         // _eth = _eth.sub(((_eth.mul(potSplit.affiliateBonus)) / 100).add((_eth.mul(potSplit.initialTeams)) / 100));
 
-        // calculate pot 
+        // 18% to pot 
         uint256 _pot = (_eth.mul(potSplit.bigPot)) / 100 ;// _eth.sub(_gen);
         
         // distribute gen share (thats what updateMasks() does) and adjust
@@ -1232,10 +1273,10 @@ contract FoMoLike is F3Devents {
     /**
      * @dev prepares compression data and fires event for buy or reload tx's
      */
-    function endTx(uint256 _pID, uint256 _eth, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
+    function endTx(uint256 _pID, uint256 _eth, uint256 _keys, LuckyDogdatasets.EventReturns memory _eventData_)
         private
     {
-        emit F3Devents.onEndTx
+        emit LuckyDogevents.onEndTx
         (
             msg.sender,
             _eth,
@@ -1261,7 +1302,7 @@ contract FoMoLike is F3Devents {
         );
         
         // can only be ran once
-        require(activated_ == false, "Monkey already activated");
+        require(activated_ == false, "Lucky Dog already activated");
         
         // activate the contract 
         activated_ = true;
