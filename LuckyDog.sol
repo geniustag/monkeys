@@ -136,13 +136,8 @@ contract PlayerBook {
 
     uint256 public pID_;        // total number of players
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
-    mapping (uint256 => Player) public plyr_;               // (pID => data) player data
+    mapping (uint256 => LuckyDogdatasets.Player) public plyr_;               // (pID => data) player data
 
-    struct Player {
-        address addr;
-        uint256 laff;
-        uint256[] subPlys;
-    }
     constructor()
         public
     {
@@ -179,7 +174,7 @@ contract PlayerBook {
     //==============================================================================
     function determinePID(address _addr, uint256 affID)
         private
-        returns (bool)
+        returns (uint256)
     {
         if (pIDxAddr_[_addr] == 0)
         {
@@ -191,9 +186,9 @@ contract PlayerBook {
                 plyr_[pID_].laff = affID;
                 plyr_[affID].subPlys.push(pID_);
             }
-            return (true);
+            return (pID_);
         } else {
-            return (false);
+            return (0);
         }
     }
 
@@ -201,7 +196,7 @@ contract PlayerBook {
     
     function registerPlayerID(address _addr, uint256 affID)
         external
-        returns (bool)
+        returns (uint256)
     {
         return determinePID(_addr, affID);
     }
@@ -245,11 +240,10 @@ contract PlayerBook {
     {
         return pID_;
     }
-        
 }
 
 interface PlayerBookInterface {
-    function registerPlayerID(address _addr, uint256 affID) external returns (bool);
+    function registerPlayerID(address _addr, uint256 affID) external returns (uint256);
     function getMaxPID() external returns (uint256);
     function getPlayerID(address _addr) external returns (uint256);
     function getPlayerLAff(uint256 _pID) external view returns (uint256);
@@ -262,7 +256,7 @@ contract LuckDog is LuckyDogevents {
     using LuckyDogKeysCalcLong for uint256;
     
     // otherFoMo3D private otherLuckyDog_;
-    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x9240ddc345d7084cc775eb65f91f7194dbbb48d8);
+    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x692a70d2e424a56d2c6c27aa97d1a86395877b3a);
     //==============================================================================
     // (game settings)
     //=================_|===========================================================
@@ -296,8 +290,7 @@ contract LuckDog is LuckyDogevents {
     //****************
     mapping (uint256 => LuckyDogdatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping(uint256 => uint256)) public rndTmEth_;      // (rID => tID => data) eth in per team, by round id and team id
-    // mapping (uint256 => uint256) public lastTenPIDs;
-    
+   
     LuckyDogdatasets.SplitRates public potSplit;
     
     // deploy
@@ -306,6 +299,13 @@ contract LuckDog is LuckyDogevents {
     {
         // 40% to for all keys holders, 35% to affiliates, 18% to big reward pot, 2% to airdrop pot, 5% to initialTeams;    
         potSplit = LuckyDogdatasets.SplitRates(40,35,18,2,5);
+        
+        // copy team players from playerBook
+         for(uint256 j=1;j<=playerBook.getMaxPID();j++){
+            plyr_[j].addr = playerBook.getPlayerAddr(j);
+            pIDxAddr_[playerBook.getPlayerAddr(j)] = j;
+        }
+        
     }
     
     //==============================================================================
@@ -371,9 +371,12 @@ contract LuckDog is LuckyDogevents {
         payable
     {
         address _addr = msg.sender;
-        // require(affId > 0 && pIDxAddr_[_addr] != affId && plyr_[affId].addr != address(0), "Invalid affid"); 
-        
-        playerBook.registerPlayerID(_addr, affId);
+        uint256 pid = playerBook.registerPlayerID(_addr, affId);
+        if (pid != 0){
+            plyr_[pid].addr = _addr;
+            pIDxAddr_[_addr] = pid;
+            plyr_[pid].laff = affId;
+        }
     }
     
     /**
@@ -1076,8 +1079,8 @@ contract LuckDog is LuckyDogevents {
         
         // pay our 10 lucky dogs
         for(uint256 j = 0; j<10;j--){
-            LuckyDogdatasets.Player storage pl = plyr_[round_[_rID].lastTenPIDs[j]];
-            pl.win =  pl.win.add(_win);
+            uint256 luckyPID = round_[_rID].lastTenPIDs[j];
+            plyr_[luckyPID].win =  plyr_[luckyPID].win.add(_win);
         }
 
         _eventData_.winnerAddr = plyr_[_winPID].addr;
