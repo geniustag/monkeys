@@ -146,14 +146,14 @@ contract PlayerBook {
     constructor()
         public
     {
-        plyr_[1].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
-        pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 1;
+        plyr_[1].addr = 0xca35b7d915458ef540ade6068dfe2f44e8fa733c;
+        pIDxAddr_[0xca35b7d915458ef540ade6068dfe2f44e8fa733c] = 1;
         
-        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
-        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 2;
+        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3123;
+        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3123] = 2;
         
-        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
-        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 3;
+        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce123;
+        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce123] = 3;
         
         plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
         pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
@@ -161,17 +161,17 @@ contract PlayerBook {
         plyr_[5].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
         pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 5;
         
-        plyr_[6].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3A9D;
-        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = 6;
+        plyr_[6].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3124;
+        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3124] = 6;
         
-        plyr_[7].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C;
-        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = 7;
+        plyr_[7].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce124;
+        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce124] = 7;
         
-        plyr_[8].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
-        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 8;
+        plyr_[8].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D7123;
+        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D7123] = 8;
         
-        plyr_[9].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
-        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 9;
+        plyr_[9].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D7124;
+        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D7124] = 9;
         
         pID_ = 9;
     }
@@ -187,7 +187,7 @@ contract PlayerBook {
             pIDxAddr_[_addr] = pID_;
             plyr_[pID_].addr = _addr;
             require (affID > 0 && plyr_[affID].addr != address(0), "Invalid affId");
-            if (plyr_[pID_].laff != 0){
+            if (plyr_[pID_].laff == 0){
                 plyr_[pID_].laff = affID;
                 plyr_[affID].subPlys.push(pID_);
             }
@@ -262,14 +262,12 @@ contract LuckDog is LuckyDogevents {
     using LuckyDogKeysCalcLong for uint256;
     
     // otherFoMo3D private otherLuckyDog_;
-    PlayerBookInterface constant private playerBook = PlayerBookInterface(0xD60d353610D9a5Ca478769D371b53CEfAA7B6E4c);
+    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x9240ddc345d7084cc775eb65f91f7194dbbb48d8);
     //==============================================================================
     // (game settings)
     //=================_|===========================================================
     string constant public name = "Luck Dog";
-    string constant public symbol = "MK";
-    uint256 private rndExtra_ = 10 minutes;     // length of the very first ICO 
-    uint256 private rndGap_ = 2 minutes;         // length of ICO phase, set to 1 year for EOS.
+    string constant public symbol = "LUD";
     uint256 constant private rndInit_ = 1 hours;                // round timer starts at this
     uint256 constant private rndInc_ = 30 seconds;              // every full key purchased adds this much to the timer
     uint256 constant private rndMax_ = 24 hours;                // max length a round timer can be
@@ -366,11 +364,14 @@ contract LuckDog is LuckyDogevents {
         buyCore(_pID, _eventData_);
     }
     
-    function register(address _addr, uint256 affId)
+    function register(uint256 affId)
+        isActivated()
+        isHuman()
         public
         payable
     {
-        require(affId > 0 && pIDxAddr_[_addr] != affId && plyr_[affId].addr != address(0)); // need a valid affId
+        address _addr = msg.sender;
+        // require(affId > 0 && pIDxAddr_[_addr] != affId && plyr_[affId].addr != address(0), "Invalid affid"); 
         
         playerBook.registerPlayerID(_addr, affId);
     }
@@ -559,7 +560,7 @@ contract LuckDog is LuckyDogevents {
         uint256 _now = now;
         
         // are we in a round?
-        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
             return ( (round_[_rID].keys.add(1000000000000000000)).ethRec(1000000000000000000) );
         else // rounds over.  need price for new round
             return ( initKeyPrice ); // init
@@ -583,10 +584,10 @@ contract LuckDog is LuckyDogevents {
         uint256 _now = now;
         
         if (_now < round_[_rID].end)
-            if (_now > round_[_rID].strt + rndGap_)
+            if (_now > round_[_rID].strt)
                 return( (round_[_rID].end).sub(_now) );
             else
-                return( (round_[_rID].strt + rndGap_).sub(_now) );
+                return( (round_[_rID].strt).sub(_now) );
         else
             return(0);
     }
@@ -758,7 +759,7 @@ contract LuckDog is LuckyDogevents {
         uint256 _now = now;
         
         // if round is active
-        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
+        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             // call core 
             core(_rID, _pID, msg.value, _eventData_);
@@ -804,7 +805,7 @@ contract LuckDog is LuckyDogevents {
         uint256 _now = now;
         
         // if round is active
-        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
+        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0))) 
         {
             // get earnings from all vaults and return unused to gen vault
             // because we use a custom safemath library.  this will throw if player 
@@ -962,7 +963,7 @@ contract LuckDog is LuckyDogevents {
         uint256 _now = now;
         
         // are we in a round?
-        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
             return ( (round_[_rID].eth).keysRec(_eth) );
         else // rounds over.  need keys for new round
             return ( (_eth).keys() );
@@ -986,7 +987,7 @@ contract LuckDog is LuckyDogevents {
         uint256 _now = now;
         
         // are we in a round?
-        if (_now > round_[_rID].strt + rndGap_ && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
+        if (_now > round_[_rID].strt && (_now <= round_[_rID].end || (_now > round_[_rID].end && round_[_rID].plyr == 0)))
             return ( (round_[_rID].keys.add(_keys)).ethRec(_keys) );
         else // rounds over.  need price for new round
             return ( (_keys).eth() );
@@ -1086,7 +1087,7 @@ contract LuckDog is LuckyDogevents {
         rID_++;
         _rID++;
         round_[_rID].strt = now;
-        round_[_rID].end = now.add(rndInit_).add(rndGap_);
+        round_[_rID].end = now.add(rndInit_); //.add(rndGap_);
         
         return(_eventData_);
     }
@@ -1297,7 +1298,7 @@ contract LuckDog is LuckyDogevents {
     {
         // only team just can activate 
         require(
-            msg.sender == 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C,
+            msg.sender == 0x14723a09acff6d2a60dcdf7aa4aff308fddc160c,
             "only team just can activate"
         );
         
@@ -1309,7 +1310,7 @@ contract LuckDog is LuckyDogevents {
         
         // lets start first round
         rID_ = 1;
-        round_[1].strt = now + rndExtra_ - rndGap_;
-        round_[1].end = now + rndInit_ + rndExtra_;
+        round_[1].strt = now;
+        round_[1].end = now + rndInit_;
     }
 }
