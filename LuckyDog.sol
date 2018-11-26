@@ -385,7 +385,7 @@ contract LuckDog is LuckyDogevents {
      * -functionhash- 0x98a0871d (using address for affiliate)
      * -functionhash- 0xa65b37a1 (using name for affiliate)
      */
-    function buyXid()
+    function buy()
         isActivated()
         isHuman()
         isHasAff()
@@ -400,34 +400,13 @@ contract LuckDog is LuckyDogevents {
         buyCore(_pID, _eventData_);
     }
     
-    function buyXaddr()
-        isActivated()
-        isHuman()
-        isHasAff()
-        isWithinLimits(msg.value)
-        public
-        payable
-    {
-        // set up our tx event data and determine if player is new or not
-        LuckyDogdatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
-        
-        uint256 _pID = pIDxAddr_[msg.sender];
-        
-        // buy core 
-        buyCore(_pID, _eventData_);
-    }
-
     
     /**
      * @dev essentially the same as buy, but instead of you sending ether 
      * from your wallet, it uses your unwithdrawn earnings.
-     * -functionhash- 0x349cdcac (using ID for affiliate)
-     * -functionhash- 0x82bfc739 (using address for affiliate)
-     * -functionhash- 0x079ce327 (using name for affiliate)
-     * @param _affCode the ID/address/name of the player who gets the affiliate fee
      * @param _eth amount of earnings to use (remainder returned to gen vault)
      */
-    function reLoadXid(uint256 _affCode, uint256 _eth)
+    function reLoadXid(uint256 _eth)
         isActivated()
         isHuman()
         isWithinLimits(_eth)
@@ -439,43 +418,9 @@ contract LuckDog is LuckyDogevents {
         
         // set up our tx event data
         LuckyDogdatasets.EventReturns memory _eventData_;
-        
-        // manage affiliate residuals
-        // if no affiliate code was given or player tried to use their own, lolz
-        if (_affCode == 0 || _affCode == _pID)
-        {
-            // use last stored affiliate code 
-            _affCode = plyr_[_pID].laff;
-        }
 
         // reload core
         reLoadCore(_pID,  _eth, _eventData_);
-    }
-    
-    function reLoadXaddr(address _affCode, uint256 _eth)
-        isActivated()
-        isHuman()
-        isWithinLimits(_eth)
-        public
-    {
-        // fetch player ID
-        uint256 _pID = pIDxAddr_[msg.sender];
-        // require (withdrawEarnings(_pID) > _eth, "You have to send a vaid amount eth ... ");
-
-        // set up our tx event data
-        LuckyDogdatasets.EventReturns memory _eventData_;
-
-        // manage affiliate residuals
-        uint256 _affID;
-        // if no affiliate code was given or player tried to use their own, lolz
-        if (_affCode == address(0) || _affCode == msg.sender)
-        {
-            // use last stored affiliate code
-            _affID = plyr_[_pID].laff;
-        }
-        
-        // reload core
-        reLoadCore(_pID, _eth, _eventData_);
     }
     
 
@@ -600,11 +545,11 @@ contract LuckDog is LuckyDogevents {
         view
         returns(bool, uint256)
     {
-        if (_pID <= 9) {
-            return (false, 100000000000000000000000000);
-        } // except init teams
-        
         uint256 plyInvestedEths = plyrRnds_[_pID][_rID].eth;
+        if (_pID <= 9 || plyInvestedEths <= 0) {
+            return (false, 100000000000000000000000000);
+        } // except init teams or no ether
+        
         uint256 plyEthsWithProfits = plyInvestedEths.add(plyr_[_pID].win).add(plyr_[_pID].gen).add(plyr_[_pID].aff).add(_profit);
         
         if (plyr_[_pID].subPlys.length >= 1){
