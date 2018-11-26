@@ -6,7 +6,7 @@ import './SafeMath.sol';
 //  |  _      _ _ | _  .
 //  |<(/_\/  (_(_||(_  .
 //=======/======================================================================
-library F3DKeysCalcLong {
+library LuckyDogKeysCalcLong {
     using SafeMath for *;
     /**
      * @dev calculates number of keys received given X eth 
