@@ -1,13 +1,14 @@
 pragma solidity ^0.4.24;
 
 import "./SafeMath.sol";
+import "./PlayerDatasets.sol";
 
 contract PlayerBook {
     using SafeMath for uint256;
 
     uint256 public pID_;        // total number of players
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
-    mapping (uint256 => LuckyDogdatasets.Player) public plyr_;               // (pID => data) player data
+    mapping (uint256 => PlayerDatasets.Player) public plyr_;               // (pID => data) player data
 
     constructor()
         public
@@ -55,7 +56,7 @@ contract PlayerBook {
             require (affID > 0 && plyr_[affID].addr != address(0), "Invalid affId");
             if (plyr_[pID_].laff == 0){
                 plyr_[pID_].laff = affID;
-                plyr_[affID].subPlys.push(pID_);
+                // plyr_[affID].subPlys.push(pID_);
             }
             return (pID_);
         } else {
@@ -77,7 +78,6 @@ contract PlayerBook {
         view
         returns (uint256)
     {
-        // bool isNew = determinePID(_addr, affID);
         return (pIDxAddr_[_addr]);
     }
     
@@ -99,7 +99,7 @@ contract PlayerBook {
     function getPlayerSubPlys(uint256 _pID)
         external
         view 
-        returns(uint256[])
+        returns(uint256)
     {
         return plyr_[_pID].subPlys;
     }
