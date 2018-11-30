@@ -26,6 +26,12 @@ contract WowWin is WowWinEvents {
     mapping (uint256 => PlayerDatasets.Round) public round_;   // (rID => data) round data
     mapping (uint256 => mapping (uint256 => PlayerDatasets.BuyRecordRounds)) public buyRecordsPlys_;
     mapping (uint256 => uint256) public roundKeyPrices;
+    mapping (uint256 => uint256) public divisionNumer;
+    
+    // DATA for record buyTimes details
+    uint256 public buyTimes = 0;
+    mapping (uint256 => uint256) plyBuyTimes;
+    mapping (uint256 => mapping (uint256 => PlayerDatasets.BuyRecordPlayers)) public buyHistoryPlyer_;
     
     uint256 public rID_;
     uint256 public maxAffDepth = 12;
@@ -69,7 +75,6 @@ contract WowWin is WowWinEvents {
         payable
     {
         uint256 _pID = pIDxAddr_[msg.sender];
-        
         if (_pID == 0){
             register(affId);
         }
@@ -126,6 +131,9 @@ contract WowWin is WowWinEvents {
         // set new leaders
         if (round_[_rID].plyr != _pID)
             round_[_rID].plyr = _pID;
+            
+        if (plyr_[_pID].lrnd != _rID)
+            plyr_[_pID].lrnd = _rID;
         
         // update player 
         plyrRnds_[_pID][_rID].keys = _keys.add(plyrRnds_[_pID][_rID].keys);
@@ -141,7 +149,7 @@ contract WowWin is WowWinEvents {
         updateLucyPlayers(_rID, _pID, _eth);
         
         // call end tx function to fire end tx event.
-        endTx(_rID, _pID, _eth, _keys);
+        endTx(_rID, _pID, _eth);
     }
     
     function distributeETH(uint256 _rID, uint256 _pID, uint256 _eth)
@@ -179,7 +187,7 @@ contract WowWin is WowWinEvents {
         round_[_rID].bonusPot = round_[_rID].bonusPot.add(_eth.mul(potSplit.allBonus)/100);
     }
     
-    function endTx(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _keys)
+    function endTx(uint256 _rID, uint256 _pID, uint256 _eth)
         private
     {
         uint256 currentPrice = roundKeyPrices[_rID];
@@ -202,9 +210,8 @@ contract WowWin is WowWinEvents {
         returns (bool)
     {
         uint256 _rID = rID_;
-        uint256 _bigRewardPot = round_[_rID].pot.mul(65) / 100;
-        uint256 _airdropTokenRewardPot = round_[_rID].pot.sub(_bigRewardPot);
-        uint256 _bonusPot = round_[_rID].bonusPot;
+        uint256 _encourageRewardPot = round_[_rID].pot.sub(round_[_rID].pot.mul(65) / 100);
+        // uint256 _bonusPot = round_[_rID].bonusPot;
 
         for(uint256 i = 0;i<15;i++){
             uint256 _pid = buyRecordsPlys_[_rID][buyTimes - i].buyerPID;
@@ -223,13 +230,31 @@ contract WowWin is WowWinEvents {
             plyr_[_pid].win = plyr_[_pid].win.add(_winPercent.mul(_winPercent) / 100); //35% give to last player
         }
         
+        uint256 keys = round_[_rID].keys;
+        
+        if (divisionNumer[_rID] == 0){
+            if (keys >= 1000 && keys < 5000){
+                divisionNumer[_rID] = keys.mul(60)/ 100; // first 60% buyers
+            } else if (keys >= 5000 && keys < 10000){
+                divisionNumer[_rID] = keys.mul(70)/ 100; // first 70% buyers
+            } else if (keys >= 10000 && keys < 15000){
+                divisionNumer[_rID] = keys.mul(75)/ 100; // first 75% buyers
+            } else if (keys >= 15000){
+                divisionNumer[_rID] = keys.mul(80)/ 100; // first 80% buyers
+            }
+        }
+        
         rID_++;
         buyTimes = 0;
+        
+        // emit WowWinEvents.onEndRound
+        // (
+        //     msg.sender,
+        //     amount,
+        //     now
+        // );
     }
     
-    uint256 public buyTimes = 0;
-    mapping (uint256 => uint256) plyBuyTimes;
-    mapping (uint256 => mapping (uint256 => PlayerDatasets.BuyRecordPlayers)) public buyHistoryPlyer_;
     function updateLucyPlayers(uint256 _rID, uint256 _pID, uint256 _eth)
         private
     {
@@ -241,8 +266,8 @@ contract WowWin is WowWinEvents {
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
         buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].buyTimeNum = buyTimes;
         buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut = _eth;
-        plyBuyTimes[roundPlayerKey] = plyrBuyTimesNumber.add(1);
         
+        plyBuyTimes[roundPlayerKey] = plyrBuyTimesNumber.add(1); // update count of player bought keys
         buyTimes++;
     }
     
@@ -262,27 +287,72 @@ contract WowWin is WowWinEvents {
         }
     }
     
-    function withdraw(uint _rID, uint256 amount)
+    function withdraw(uint256 amount)
         public
     {
         uint256 _pID = pIDxAddr_[msg.sender];
         require(_pID > 0,"Invalid Player want to withdraw");
         
-        uint256 rewardRate = 10;
-        uint256 standardNumber = round_[_rID].keys.mul(80)/ 100; // first 80% buyers
+        uint256 roundsStaticWin = 0;
+        for(uint256 i = 1;i<plyr_[_pID].lrnd;i++){
+            uint256 _win = staticProfitForPID(i, _pID);
+            if (plyrRnds_[i][_pID].staticWin == 0){
+                plyrRnds_[i][_pID].staticWin = _win;
+            }
+            roundsStaticWin = roundsStaticWin.add(_win);
+        }
+        
+        if (roundsStaticWin != plyr_[_pID].staticWin)
+            plyr_[_pID].staticWin = roundsStaticWin;
+            
+        uint256 allAvalibleEth = roundsStaticWin.add(plyr_[_pID].win).add(plyr_[_pID].aff).add(plyr_[_pID].gen);
+        
+        require(allAvalibleEth > 0, "Have no eth to withdraw");
+        require(allAvalibleEth >= amount.add(plyr_[_pID].withdraw), "not enough eths");
+        
+        msg.sender.transfer(amount);
+        plyr_[_pID].withdraw = plyr_[_pID].withdraw.add(amount);
+        
+        // emit WowWinEvents.onWithdraw
+        // (
+        //     msg.sender,
+        //     amount,
+        //     now
+        // );
+    }
+    
+    function staticProfitForPID(uint256 _rID, uint256 _pID)
+        public
+        view
+        returns(uint256)
+    {
+        uint256 standardNumber = divisionNumer[_rID];
+        
+        uint256 _win = plyrRnds_[_rID][_pID].staticWin;
+        
+        if (_win > 0) return _win;
+        if (isRoundRunning(_rID)) return 0;
         
         uint256 roundPlayerKey = _rID + _pID * 10000;
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
         for(uint256 i = 0; i< plyrBuyTimesNumber;i++){
             uint256 _buyNum = buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].buyTimeNum;
-            if (_buyNum <= standardNumber){
+            if (_buyNum < standardNumber){
                 uint256 _ethOut = buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut;
-                plyr_[_pID].win = plyr_[_pID].win.add(_ethOut.mul(rewardRate)/ 100);
+                _win = _win.add(_ethOut.mul(10) / 100);
             }
-            
         }
+        return _win;
     }
-     
+    
+    function isRoundRunning(uint256 _rID)
+        public
+        returns(bool)
+    {
+        // TODO
+        return true;
+    }
+    
     function updateTimer(uint256 _keys, uint256 _rID)
         private
     {

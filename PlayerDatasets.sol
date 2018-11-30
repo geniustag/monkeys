@@ -11,8 +11,10 @@ library PlayerDatasets {
     }
     struct Player {
         address addr;   // player address
-        uint256 win;    // winnings vault
-        uint256 gen;    // general vault
+        uint256 gen;    // general profit
+        uint256 staticWin; // static profit
+        uint256 win;    // win profit
+        uint256 withdraw;    // withdrawed amount
         uint256 aff;    // affiliate vault
         uint256 lrnd;   // last round played
         uint256 laff;   // last affiliate id used
@@ -21,7 +23,8 @@ library PlayerDatasets {
     struct PlayerRounds {
         uint256 eth;    // eth player has added to round (used for eth limiter)
         uint256 keys;   // keys
-        uint256 mask;   // player mask 
+        uint256 win;    // win
+        uint256 staticWin;
     }
     struct Round {
         uint256 luckyPlayers;
@@ -33,12 +36,20 @@ library PlayerDatasets {
         uint256 eth;    // total eth in
         uint256 pot;    // eth to pot (during round) / final amount paid to winner (after round ends)
         uint256 mask;   // global mask
+        uint256 bonusPot;
+    }
+    struct BuyRecordRounds{
+        uint256 buyerPID;
+        uint256 buyerEthIn;
+    }
+    struct BuyRecordPlayers{
+        uint256 buyTimeNum;
+        uint256 ethOut;
     }
     struct SplitRates {
         uint256 allBonus;              // % of pot thats paid to key holders of current round
         uint256 affiliateBonus;        // % of pot thats paid to 9 parents
-        uint256 bigPot;                // % of pot thats paid to final 10 winners
-        uint256 airdrop;               // % of airdrop
+        uint256 bigPot;                // % of pot thats paid to final 15 winners
         uint256 initialTeams;          // % of initial team
     }
 }
