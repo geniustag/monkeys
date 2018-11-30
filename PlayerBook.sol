@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 import "./SafeMath.sol";
 import "./PlayerDatasets.sol";
@@ -13,14 +13,14 @@ contract PlayerBook {
     constructor()
         public
     {
-        plyr_[1].addr = 0xca35b7d915458ef540ade6068dfe2f44e8fa733c;
-        pIDxAddr_[0xca35b7d915458ef540ade6068dfe2f44e8fa733c] = 1;
+        plyr_[1].addr = 0xb42b160895Db93874073Bf032174b7597e0fdB82;
+        pIDxAddr_[0xb42b160895Db93874073Bf032174b7597e0fdB82] = 1;
         
-        plyr_[2].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3123;
-        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3123] = 2;
+        plyr_[2].addr = 0xBD0fB7781990279c26C3c996998Cf4768C706F88;
+        pIDxAddr_[0xBD0fB7781990279c26C3c996998Cf4768C706F88] = 2;
         
-        plyr_[3].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce123;
-        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce123] = 3;
+        plyr_[3].addr = 0xFEA345c648D8D13d44AAb7A4d730D0C4eeDB7F34;
+        pIDxAddr_[0xFEA345c648D8D13d44AAb7A4d730D0C4eeDB7F34] = 3;
         
         plyr_[4].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C;
         pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = 4;
@@ -28,17 +28,17 @@ contract PlayerBook {
         plyr_[5].addr = 0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53;
         pIDxAddr_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = 5;
         
-        plyr_[6].addr = 0x8b4DA1827932D71759687f925D17F81Fc94e3124;
-        pIDxAddr_[0x8b4DA1827932D71759687f925D17F81Fc94e3124] = 6;
+        plyr_[6].addr = 0x7553664189200a33be0932B8C39771C9248DFEB1;
+        pIDxAddr_[0x7553664189200a33be0932B8C39771C9248DFEB1] = 6;
         
-        plyr_[7].addr = 0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce124;
-        pIDxAddr_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce124] = 7;
+        plyr_[7].addr = 0xf9EEc40e933F82896A682a63E1277232b99C64E1;
+        pIDxAddr_[0xf9EEc40e933F82896A682a63E1277232b99C64E1] = 7;
         
-        plyr_[8].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D7123;
-        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D7123] = 8;
+        plyr_[8].addr = 0xaE25a93A3D7766F5dF24333a0Ef97351ce49e66d;
+        pIDxAddr_[0xaE25a93A3D7766F5dF24333a0Ef97351ce49e66d] = 8;
         
-        plyr_[9].addr = 0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D7124;
-        pIDxAddr_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D7124] = 9;
+        plyr_[9].addr = 0x4591f7a860A28819FC010c842983c548A44d0f26;
+        pIDxAddr_[0x4591f7a860A28819FC010c842983c548A44d0f26] = 9;
         
         pID_ = 9;
     }
@@ -48,12 +48,13 @@ contract PlayerBook {
         private
         returns (uint256)
     {
+        require (affID > 0 && plyr_[affID].addr != address(0), "Invalid affId");
+        
         if (pIDxAddr_[_addr] == 0)
         {
             pID_++;
             pIDxAddr_[_addr] = pID_;
             plyr_[pID_].addr = _addr;
-            require (affID > 0 && plyr_[affID].addr != address(0), "Invalid affId");
             if (plyr_[pID_].laff == 0){
                 plyr_[pID_].laff = affID;
                 // plyr_[affID].subPlys.push(pID_);

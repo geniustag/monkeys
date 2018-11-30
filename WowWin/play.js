@@ -15,11 +15,12 @@ window.addEventListener('load', function() {
 
 var abi = [];
 
-var address = "0xb4c132df16ea4ae3d50203df13e52ce21036f59a",
+var address = "0xc06375196666681f8c9fde843903a9ce4fdcab2a",
     GameContract = web3.eth.contract(abi),
     Game = GameContract.at(address),
     KeyPrice = 0,
-    defaultBuyGas = 100000,
+    affId = 0,
+    defaultBuyGas = 1000000,
     defaultGasPrice = 3000000000,
     currentPlayerAddress = 0;
 
@@ -30,13 +31,13 @@ Game.rID_.call(function(error, roundId){
 });
 
 var events = Game.allEvents(["lastest"], function(error, event){
-
-if (!error)
+  if (!error){
     var args = res.args;
     if (res.event === "onBuyKeyEnd") {
       KeyPrice = args.nextKeyPrice;
       currentPlayerAddress = argsplayerAddress;
     }
+  }
 });
 
 var buyParams  = {
@@ -47,10 +48,11 @@ var buyParams  = {
 }
 
 function buyKey() {
-  web3.eth.estimateGas(buyParams, function(err, gasLimit){
-    web3.eth.getGasPrice(function(err, gasPrice){
-      console.info("GAS: " + gasLimit, "GASPRICE" + gasPrice);
-      Game.buy({value: KeyPrice, gas: gasLimit, gasPrice: gasPrice}, function(err, result){
+  web3.eth.estimateGas(buyParams, function(err, _gasLimit){
+    if (_gasLimit == undefined) _gasLimit = defaultBuyGas;
+    web3.eth.getGasPrice(function(err, _gasPrice){
+      console.info("GAS: " + _gasLimit, "GASPRICE: " + _gasPrice);
+      Game.buy({value: KeyPrice, gas: _gasLimit, gasPrice: _gasPrice}, function(err, result){
          console.info(result);
       });
     });

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
 import "./SafeMath.sol";
 import "./PlayerDatasets.sol";
@@ -18,7 +18,7 @@ contract WowWin is WowWinEvents {
     
     using SafeMath for uint256;
     
-    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x23a56982df39d3ce9c5f64df365097b8232a52be);
+    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x6ef52008f28009c55b57bc8682a5e126c66318e0);
 
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (uint256 => PlayerDatasets.Player) public plyr_;   // (pID => data) player data
@@ -37,6 +37,9 @@ contract WowWin is WowWinEvents {
     uint256 public maxAffDepth = 12;
     uint256 public maxLucyNumber = 15;
     uint256 public initKeyPrice = 10000000000000000;
+    bool public activated_ = false;
+    uint256 constant private rndInit_ = 8 hours;
+    
     PlayerDatasets.SplitRates public potSplit;
 
     constructor()
@@ -58,6 +61,23 @@ contract WowWin is WowWinEvents {
         _;    
     }
     
+    modifier isActivated() {
+        require(activated_ == true, "its not ready yet.  check ?eta in discord"); 
+        _;
+    }
+    
+    /**
+     * @dev prevents contracts from interacting with fomo3d 
+     */
+    modifier isHuman() {
+        address _addr = msg.sender;
+        uint256 _codeLength;
+        
+        assembly {_codeLength := extcodesize(_addr)}
+        require(_codeLength == 0, "sorry humans only");
+        _;
+    }
+
     function()
         isWithinLimits(msg.value)
         public
@@ -66,10 +86,24 @@ contract WowWin is WowWinEvents {
         uint256 _pID = pIDxAddr_[msg.sender];
         require(_pID == 0 || plyr_[_pID].laff == 0, "you need to register a Player ID");
         
-        buy(plyr_[_pID].aff);
+        buy();
     }
     
-    function buy(uint256 affId)
+    function buy()
+        isActivated()
+        isHuman()
+        isWithinLimits(msg.value)
+        public
+        payable
+    {
+        uint256 _pID = pIDxAddr_[msg.sender];
+        require(plyr_[_pID].laff > 0 ||  _pID == 0, "Regsiter First..."); 
+        buyCore(_pID);
+    }
+    
+    function buyByAff(uint256 affId)
+        isActivated()
+        isHuman()
         isWithinLimits(msg.value)
         public
         payable
@@ -101,29 +135,13 @@ contract WowWin is WowWinEvents {
         );
     }
     
-    function getCurrentRoundID()
-        public
-        returns(uint256)
-    {
-        if (false){
-            rID_++;
-        }
-        if (rID_ == 0) {
-            rID_ = 1;
-        }
-        if (roundKeyPrices[rID_] == 0){
-            roundKeyPrices[rID_] = initKeyPrice;
-        }
-        
-        return rID_;    
-    }
     
     function buyCore(uint256 _pID)
         private
     {
         uint256 _eth = msg.value;
         uint256 _keys = 1;
-        uint256 _rID = getCurrentRoundID();
+        uint256 _rID = rID_;
         
         require(_eth >= roundKeyPrices[_rID], "not enough ETH....");
         
@@ -155,7 +173,6 @@ contract WowWin is WowWinEvents {
     function distributeETH(uint256 _rID, uint256 _pID, uint256 _eth)
         private
     {
-        uint256 originEth = _eth;
         uint256 _aff = _eth / 10; // 10% to first level, 
         uint256 _affID = plyr_[_pID].laff;
         for(uint256 i = 1;i<=maxAffDepth;i++){
@@ -176,10 +193,10 @@ contract WowWin is WowWinEvents {
             }
         }
         
-        round_[_rID].pot = _eth.mul(potSplit.bigPot) / 100;  // %8 to big reward pot
+        round_[_rID].pot = round_[_rID].pot.add(_eth.mul(potSplit.bigPot) / 100);  // %8 to big reward pot
         
         // 2% to initialTeams
-        uint256 _initTeamReward = (originEth.mul(potSplit.initialTeams)) / 100;
+        uint256 _initTeamReward = (_eth.mul(potSplit.initialTeams)) / 100;
         for(uint256 j=1;j<=9;j++){
             plyr_[j].gen = plyr_[j].gen.add(_initTeamReward / 9);
         }
@@ -246,6 +263,8 @@ contract WowWin is WowWinEvents {
         
         rID_++;
         buyTimes = 0;
+        roundKeyPrices[rID_] = initKeyPrice;
+        round_[_rID].ended = true;
         
         // emit WowWinEvents.onEndRound
         // (
@@ -272,8 +291,8 @@ contract WowWin is WowWinEvents {
     }
     
     function register(uint256 affId)
-        // isActivated()
-        // isHuman()
+        isActivated()
+        isHuman()
         public
         payable
     {
@@ -347,10 +366,32 @@ contract WowWin is WowWinEvents {
     
     function isRoundRunning(uint256 _rID)
         public
+        view
         returns(bool)
     {
         // TODO
-        return true;
+        return !round_[_rID].ended;
+    }
+    
+    function activate()
+        public
+    {
+        require(
+            msg.sender == 0xafda8dAA256EABc84a30bCd415A0A9E2feE15945,
+            "only admin just can activate"
+        );
+        
+        // can only be ran once
+        require(activated_ == false, "WowWin already activated");
+        
+        // activate the contract 
+        activated_ = true;
+        
+        // lets start first round
+        rID_ = 1;
+        round_[1].strt = now;
+        round_[1].end = now + rndInit_;
+        roundKeyPrices[1] = initKeyPrice;
     }
     
     function updateTimer(uint256 _keys, uint256 _rID)
