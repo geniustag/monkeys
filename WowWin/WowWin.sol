@@ -145,7 +145,6 @@ contract WowWin is WowWinEvents {
         
         require(_eth >= roundKeyPrices[_rID], "not enough ETH....");
         
-        updateTimer(_keys, _rID);
         // set new leaders
         if (round_[_rID].plyr != _pID)
             round_[_rID].plyr = _pID;
@@ -209,6 +208,7 @@ contract WowWin is WowWinEvents {
     {
         uint256 currentPrice = roundKeyPrices[_rID];
         roundKeyPrices[_rID] = currentPrice.mul(10002) / 10000;
+        updateTimer(_rID);
         
         emit WowWinEvents.onBuyKeyEnd
         (
@@ -397,7 +397,7 @@ contract WowWin is WowWinEvents {
         roundKeyPrices[1] = initKeyPrice;
     }
     
-    function updateTimer(uint256 _keys, uint256 _rID)
+    function updateTimer(uint256 _rID)
         private
     {
        // TODO
