@@ -227,7 +227,6 @@ contract WowWin is WowWinEvents {
         returns (bool)
     {
         uint256 _rID = rID_;
-        uint256 _encourageRewardPot = round_[_rID].pot.sub(round_[_rID].pot.mul(65) / 100);
         // uint256 _bonusPot = round_[_rID].bonusPot;
 
         for(uint256 i = 0;i<15;i++){
@@ -345,7 +344,6 @@ contract WowWin is WowWinEvents {
         view
         returns(uint256)
     {
-        uint256 standardNumber = divisionNumer[_rID];
         
         uint256 _win = plyrRnds_[_rID][_pID].staticWin;
         
@@ -354,13 +352,18 @@ contract WowWin is WowWinEvents {
         
         uint256 roundPlayerKey = _rID + _pID * 10000;
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
+        uint256 encouragePot = round_[_rID].pot.mul(35).div(100);
+        
         for(uint256 i = 0; i< plyrBuyTimesNumber;i++){
             uint256 _buyNum = buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].buyTimeNum;
-            if (_buyNum < standardNumber){
-                uint256 _ethOut = buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut;
-                _win = _win.add(_ethOut.mul(10) / 100);
+            if (_buyNum < divisionNumer[_rID]){
+                _win = _win.add(buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut.mul(10) / 100);
+            }
+            if (_buyNum >= (round_[_rID].keys.mul(85) / 100) && _buyNum < (round_[_rID].keys.mul(95) / 100)){
+                _win = _win.add( encouragePot.div(round_[_rID].keys.div(10)) );
             }
         }
+        
         return _win;
     }
     
