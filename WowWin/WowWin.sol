@@ -357,7 +357,15 @@ contract WowWin is WowWinEvents {
         for(uint256 i = 0; i< plyrBuyTimesNumber;i++){
             uint256 _buyNum = buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].buyTimeNum;
             if (_buyNum < divisionNumer[_rID]){
-                _win = _win.add(buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut.mul(10) / 100);
+                if (_buyNum > 10000 && _buyNum < 15000){
+                    _win = _win.add(buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut.mul(10) / 100);
+
+                } else if (_buyNum >= 15000 && _buyNum < 20000){
+                    _win = _win.add(buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut.mul(15) / 100);
+
+                } else if (_buyNum >= 20000 && _buyNum < 25000){
+                    _win = _win.add(buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut.mul(20) / 100);
+                }
             }
             if (_buyNum >= (round_[_rID].keys.mul(85) / 100) && _buyNum < (round_[_rID].keys.mul(95) / 100)){
                 _win = _win.add( encouragePot.div(round_[_rID].keys.div(10)) );
