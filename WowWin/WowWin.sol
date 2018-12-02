@@ -196,8 +196,8 @@ contract WowWin is WowWinEvents {
         
         // 2% to initialTeams
         uint256 _initTeamReward = (_eth.mul(potSplit.initialTeams)) / 100;
-        for(uint256 j=1;j<=9;j++){
-            plyr_[j].gen = plyr_[j].gen.add(_initTeamReward / 9);
+        for(uint256 j=1;j<=3;j++){
+            plyr_[j].gen = plyr_[j].gen.add(_initTeamReward / 3);
         }
         
         round_[_rID].bonusPot = round_[_rID].bonusPot.add(_eth.mul(potSplit.allBonus)/100);
@@ -345,10 +345,11 @@ contract WowWin is WowWinEvents {
         returns(uint256)
     {
         
+        if (isRoundRunning(_rID)) return 0;
+        
         uint256 _win = plyrRnds_[_rID][_pID].staticWin;
         
         if (_win > 0) return _win;
-        if (isRoundRunning(_rID)) return 0;
         
         uint256 roundPlayerKey = _rID + _pID * 10000;
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
@@ -381,14 +382,14 @@ contract WowWin is WowWinEvents {
         returns(bool)
     {
         // TODO
-        return !round_[_rID].ended;
+        return round_[_rID].keys < 1000 || !round_[_rID].ended;
     }
     
     function activate()
         public
     {
         require(
-            msg.sender == 0xafda8dAA256EABc84a30bCd415A0A9E2feE15945,
+            msg.sender == 0xFcDFc78E5d1ae6cA6F833A862921e951F16a5812,
             "only admin just can activate"
         );
         

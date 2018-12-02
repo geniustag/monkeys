@@ -22,5 +22,14 @@ contract WowWinEvents {
         uint256 laffID,
         uint256 timeStamp
     );
+
+    event onWithdraw
+    (
+        uint256 indexed playerID,
+        address playerAddress,
+        uint256 ethOut,
+        uint256 timeStamp
+    );
+    
     
 }
