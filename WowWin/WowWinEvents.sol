@@ -31,5 +31,11 @@ contract WowWinEvents {
         uint256 timeStamp
     );
     
+    event onEndRound
+    (
+        address lastBuyer,
+        uint256 rID,
+        uint256 timeStamp
+    );
     
 }

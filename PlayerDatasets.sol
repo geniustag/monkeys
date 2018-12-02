@@ -37,6 +37,7 @@ library PlayerDatasets {
         uint256 pot;    // eth to pot (during round) / final amount paid to winner (after round ends)
         uint256 mask;   // global mask
         uint256 bonusPot;
+        uint256 buyTimes; // count buy counts
     }
     struct BuyRecordRounds{
         uint256 buyerPID;

@@ -29,7 +29,6 @@ contract WowWin is WowWinEvents {
     mapping (uint256 => uint256) public divisionNumer;
     
     // DATA for record buyTimes details
-    uint256 public buyTimes = 0;
     mapping (uint256 => uint256) plyBuyTimes;
     mapping (uint256 => mapping (uint256 => PlayerDatasets.BuyRecordPlayers)) public buyHistoryPlyer_;
     
@@ -135,7 +134,6 @@ contract WowWin is WowWinEvents {
         );
     }
     
-    
     function buyCore(uint256 _pID)
         private
     {
@@ -163,7 +161,7 @@ contract WowWin is WowWinEvents {
         // distribute eth
         distributeETH(_rID, _pID, _eth);
         
-        updateLucyPlayers(_rID, _pID, _eth);
+        recordPlayerBuy(_rID, _pID, _eth);
         
         // call end tx function to fire end tx event.
         endTx(_rID, _pID, _eth);
@@ -210,6 +208,9 @@ contract WowWin is WowWinEvents {
         roundKeyPrices[_rID] = currentPrice.mul(10002) / 10000;
         updateTimer(_rID);
         
+        // determine end conditions
+        endRound();
+        
         emit WowWinEvents.onBuyKeyEnd
         (
             msg.sender,
@@ -227,10 +228,31 @@ contract WowWin is WowWinEvents {
         returns (bool)
     {
         uint256 _rID = rID_;
-        // uint256 _bonusPot = round_[_rID].bonusPot;
-
+    
+        if (round_[_rID].ended) return false;
+        
+        if (now < (round_[_rID].strt + 8 * 3600)) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    function fourceEndRound(uint256 _rID)
+        public
+    {
+        if (round_[_rID].ended) return;
+        doEndRound();
+    }
+    
+    function doEndRound()
+        private
+    {
+        uint256 _rID = rID_;
+        uint256 keys = round_[_rID].keys;
+        
         for(uint256 i = 0;i<15;i++){
-            uint256 _pid = buyRecordsPlys_[_rID][buyTimes - i].buyerPID;
+            uint256 _pid = buyRecordsPlys_[_rID][round_[_rID].buyTimes - i].buyerPID;
             uint256 _winPercent = 1;
             if (i == 0){
                  _winPercent = 35;
@@ -246,8 +268,6 @@ contract WowWin is WowWinEvents {
             plyr_[_pid].win = plyr_[_pid].win.add(_winPercent.mul(_winPercent) / 100); //35% give to last player
         }
         
-        uint256 keys = round_[_rID].keys;
-        
         if (divisionNumer[_rID] == 0){
             if (keys >= 1000 && keys < 5000){
                 divisionNumer[_rID] = keys.mul(60)/ 100; // first 60% buyers
@@ -261,32 +281,31 @@ contract WowWin is WowWinEvents {
         }
         
         rID_++;
-        buyTimes = 0;
-        roundKeyPrices[rID_] = initKeyPrice;
+        startRound(rID_);
+    
         round_[_rID].ended = true;
-        
-        // emit WowWinEvents.onEndRound
-        // (
-        //     msg.sender,
-        //     amount,
-        //     now
-        // );
+        emit WowWinEvents.onEndRound
+        (
+            msg.sender,
+            _rID,
+            now
+        );
     }
     
-    function updateLucyPlayers(uint256 _rID, uint256 _pID, uint256 _eth)
+    function recordPlayerBuy(uint256 _rID, uint256 _pID, uint256 _eth)
         private
     {
-        buyRecordsPlys_[_rID][buyTimes].buyerPID = _pID;
-        buyRecordsPlys_[_rID][buyTimes].buyerEthIn = _eth;
+        buyRecordsPlys_[_rID][round_[_rID].buyTimes].buyerPID = _pID;
+        buyRecordsPlys_[_rID][round_[_rID].buyTimes].buyerEthIn = _eth;
         
         // round 1, player 12345 => 123450001
         uint256 roundPlayerKey = _rID + _pID * 10000;
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
-        buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].buyTimeNum = buyTimes;
+        buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].buyTimeNum = round_[_rID].buyTimes;
         buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut = _eth;
         
         plyBuyTimes[roundPlayerKey] = plyrBuyTimesNumber.add(1); // update count of player bought keys
-        buyTimes++;
+        round_[_rID].buyTimes++;
     }
     
     function register(uint256 affId)
@@ -309,6 +328,28 @@ contract WowWin is WowWinEvents {
         public
     {
         uint256 _pID = pIDxAddr_[msg.sender];
+        uint256 allAvalibleEth = calcAllProfits();
+        
+        require(allAvalibleEth > 0, "Have no eth to withdraw");
+        require(allAvalibleEth >= amount.add(plyr_[_pID].withdraw), "not enough eths");
+        
+        msg.sender.transfer(amount);
+        plyr_[_pID].withdraw = plyr_[_pID].withdraw.add(amount);
+        
+        emit WowWinEvents.onWithdraw
+        (
+            _pID,
+            msg.sender,
+            amount,
+            now
+        );
+    }
+    
+    function calcAllProfits()
+        public
+        returns(uint256)
+    {
+        uint256 _pID = pIDxAddr_[msg.sender];
         require(_pID > 0,"Invalid Player want to withdraw");
         
         uint256 roundsStaticWin = 0;
@@ -323,20 +364,7 @@ contract WowWin is WowWinEvents {
         if (roundsStaticWin != plyr_[_pID].staticWin)
             plyr_[_pID].staticWin = roundsStaticWin;
             
-        uint256 allAvalibleEth = roundsStaticWin.add(plyr_[_pID].win).add(plyr_[_pID].aff).add(plyr_[_pID].gen);
-        
-        require(allAvalibleEth > 0, "Have no eth to withdraw");
-        require(allAvalibleEth >= amount.add(plyr_[_pID].withdraw), "not enough eths");
-        
-        msg.sender.transfer(amount);
-        plyr_[_pID].withdraw = plyr_[_pID].withdraw.add(amount);
-        
-        // emit WowWinEvents.onWithdraw
-        // (
-        //     msg.sender,
-        //     amount,
-        //     now
-        // );
+        return roundsStaticWin.add(plyr_[_pID].win).add(plyr_[_pID].aff).add(plyr_[_pID].gen);
     }
     
     function staticProfitForPID(uint256 _rID, uint256 _pID)
@@ -389,7 +417,7 @@ contract WowWin is WowWinEvents {
         public
     {
         require(
-            msg.sender == 0xFcDFc78E5d1ae6cA6F833A862921e951F16a5812,
+            msg.sender == 0xafda8dAA256EABc84a30bCd415A0A9E2feE15945,
             "only admin just can activate"
         );
         
@@ -401,9 +429,16 @@ contract WowWin is WowWinEvents {
         
         // lets start first round
         rID_ = 1;
-        round_[1].strt = now;
-        round_[1].end = now + rndInit_;
-        roundKeyPrices[1] = initKeyPrice;
+        startRound(rID_);
+    }
+    
+    function startRound(uint256 _rID)
+        private
+    {
+        round_[_rID].strt = now;
+        round_[_rID].end = now + rndInit_;
+        round_[_rID].buyTimes = 0;
+        roundKeyPrices[_rID] = initKeyPrice;
     }
     
     function updateTimer(uint256 _rID)
