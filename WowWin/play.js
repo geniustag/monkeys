@@ -33,10 +33,9 @@ Game.rID_.call(function(error, roundId){
 var events = Game.allEvents(["lastest"], function(error, res){
   if (!error){
     var args = res.args;
-    console.info("wwwwwwwwwwww: " + res)
     if (res.event === "onBuyKeyEnd") {
       KeyPrice = args.nextKeyPrice;
-      currentPlayerAddress = argsplayerAddress;
+      currentPlayerAddress = args.playerAddress;
     }
   }
 });

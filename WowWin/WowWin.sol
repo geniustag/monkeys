@@ -296,7 +296,7 @@ contract WowWin is WowWinEvents {
         buyRecordsPlys_[_rID][round_[_rID].buyTimes].buyerEthIn = _eth;
         
         // round 1, player 12345 => 123450001
-        uint256 roundPlayerKey = _rID + _pID * 10000;
+        uint256 roundPlayerKey = _pID + _rID * 10000;
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
         buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].buyTimeNum = round_[_rID].buyTimes;
         buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut = _eth;
@@ -376,7 +376,7 @@ contract WowWin is WowWinEvents {
         
         if (_win > 0) return _win;
         
-        uint256 roundPlayerKey = _rID + _pID * 10000;
+        uint256 roundPlayerKey = _pID + _rID * 10000;
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
         uint256 encouragePot = round_[_rID].pot.mul(35).div(100);
         
