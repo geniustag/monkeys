@@ -15,7 +15,7 @@ window.addEventListener('load', function() {
 
 var abi = [];
 
-var address = "0xc06375196666681f8c9fde843903a9ce4fdcab2a",
+var address = "0xa0d7750671cb616b02ed9e6337f374591efd363a",
     GameContract = web3.eth.contract(abi),
     Game = GameContract.at(address),
     KeyPrice = 0,
@@ -30,9 +30,10 @@ Game.rID_.call(function(error, roundId){
   });
 });
 
-var events = Game.allEvents(["lastest"], function(error, event){
+var events = Game.allEvents(["lastest"], function(error, res){
   if (!error){
     var args = res.args;
+    console.info("wwwwwwwwwwww: " + res)
     if (res.event === "onBuyKeyEnd") {
       KeyPrice = args.nextKeyPrice;
       currentPlayerAddress = argsplayerAddress;
@@ -43,11 +44,11 @@ var events = Game.allEvents(["lastest"], function(error, event){
 var buyParams  = {
   from: web3.eth.coinbase, 
   to: address, 
-  data: "0xa6f2ae3a", 
-  value: KeyPrice
+  data: "0xa6f2ae3a"
 }
 
 function buyKey() {
+  buyParams.value = KeyPrice;
   web3.eth.estimateGas(buyParams, function(err, _gasLimit){
     if (_gasLimit == undefined) _gasLimit = defaultBuyGas;
     web3.eth.getGasPrice(function(err, _gasPrice){

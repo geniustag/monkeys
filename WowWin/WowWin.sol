@@ -18,7 +18,7 @@ contract WowWin is WowWinEvents {
     
     using SafeMath for uint256;
     
-    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x6ef52008f28009c55b57bc8682a5e126c66318e0);
+    PlayerBookInterface constant private playerBook = PlayerBookInterface(0xe4f84c9b3b8432a463418b443e9a66be9582d684);
 
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (uint256 => PlayerDatasets.Player) public plyr_;   // (pID => data) player data
@@ -35,6 +35,7 @@ contract WowWin is WowWinEvents {
     uint256 public rID_;
     uint256 public maxAffDepth = 12;
     uint256 public maxLucyNumber = 15;
+    uint256 public teamNum = 3;
     uint256 public initKeyPrice = 10000000000000000;
     bool public activated_ = false;
     uint256 constant private rndInit_ = 8 hours;
@@ -83,7 +84,7 @@ contract WowWin is WowWinEvents {
         payable
     {
         uint256 _pID = pIDxAddr_[msg.sender];
-        require(_pID == 0 || plyr_[_pID].laff == 0, "you need to register a Player ID");
+        require(_pID == 0 || plyr_[_pID].laff == 0 || _pID <= teamNum, "you need to register a Player ID");
         
         buy();
     }
@@ -96,7 +97,7 @@ contract WowWin is WowWinEvents {
         payable
     {
         uint256 _pID = pIDxAddr_[msg.sender];
-        require(plyr_[_pID].laff > 0 ||  _pID == 0, "Regsiter First..."); 
+        require(plyr_[_pID].laff > 0 ||  _pID == 0 || _pID <= teamNum, "Regsiter First..."); 
         buyCore(_pID);
     }
     
@@ -194,8 +195,8 @@ contract WowWin is WowWinEvents {
         
         // 2% to initialTeams
         uint256 _initTeamReward = (_eth.mul(potSplit.initialTeams)) / 100;
-        for(uint256 j=1;j<=3;j++){
-            plyr_[j].gen = plyr_[j].gen.add(_initTeamReward / 3);
+        for(uint256 j=1;j<=teamNum;j++){
+            plyr_[j].gen = plyr_[j].gen.add(_initTeamReward / teamNum);
         }
         
         round_[_rID].bonusPot = round_[_rID].bonusPot.add(_eth.mul(potSplit.allBonus)/100);
@@ -235,14 +236,8 @@ contract WowWin is WowWinEvents {
             return false;
         }
         
-        return true;
-    }
-    
-    function fourceEndRound(uint256 _rID)
-        public
-    {
-        if (round_[_rID].ended) return;
         doEndRound();
+        return true;
     }
     
     function doEndRound()
@@ -250,6 +245,8 @@ contract WowWin is WowWinEvents {
     {
         uint256 _rID = rID_;
         uint256 keys = round_[_rID].keys;
+        
+        require(keys >= 1000, "less keys, bad luck");
         
         for(uint256 i = 0;i<15;i++){
             uint256 _pid = buyRecordsPlys_[_rID][round_[_rID].buyTimes - i].buyerPID;
@@ -410,14 +407,14 @@ contract WowWin is WowWinEvents {
         returns(bool)
     {
         // TODO
-        return round_[_rID].keys < 1000 || !round_[_rID].ended;
+        return (_rID == rID_) && (round_[_rID].keys < 1000 || !round_[_rID].ended);
     }
     
     function activate()
         public
     {
         require(
-            msg.sender == 0xafda8dAA256EABc84a30bCd415A0A9E2feE15945,
+            msg.sender == 0xb42b160895Db93874073Bf032174b7597e0fdB82,
             "only admin just can activate"
         );
         
@@ -439,6 +436,17 @@ contract WowWin is WowWinEvents {
         round_[_rID].end = now + rndInit_;
         round_[_rID].buyTimes = 0;
         roundKeyPrices[_rID] = initKeyPrice;
+    }
+    
+    function forceEndRound(uint256 _rID)
+        public
+    {
+        if (round_[_rID].ended) return;
+        require(
+            msg.sender == 0xb42b160895Db93874073Bf032174b7597e0fdB82,
+            "only admin just can force End"
+        );
+        doEndRound();
     }
     
     function updateTimer(uint256 _rID)
