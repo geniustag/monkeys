@@ -18,7 +18,7 @@ contract WowWin is WowWinEvents {
     
     using SafeMath for uint256;
     
-    PlayerBookInterface constant private playerBook = PlayerBookInterface(0xf5ceee116714af8a554ec668ffd48dd3b64e3aa6);
+    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x5e6e307606ae793d0cd908f7dc67e93732d5cbf6);
 
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (uint256 => PlayerDatasets.Player) public plyr_;   // (pID => data) player data
