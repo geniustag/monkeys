@@ -18,18 +18,18 @@ contract WowWin is WowWinEvents {
     
     using SafeMath for uint256;
     
-    PlayerBookInterface constant private playerBook = PlayerBookInterface(0xe4f84c9b3b8432a463418b443e9a66be9582d684);
+    PlayerBookInterface constant private playerBook = PlayerBookInterface(0xf5ceee116714af8a554ec668ffd48dd3b64e3aa6);
 
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (uint256 => PlayerDatasets.Player) public plyr_;   // (pID => data) player data
     mapping (uint256 => mapping (uint256 => PlayerDatasets.PlayerRounds)) public plyrRnds_;    // (pID => rID => data) player round data by player id & round id
     mapping (uint256 => PlayerDatasets.Round) public round_;   // (rID => data) round data
-    mapping (uint256 => mapping (uint256 => PlayerDatasets.BuyRecordRounds)) public buyRecordsPlys_;
+    mapping (uint256 => mapping (uint256 => PlayerDatasets.BuyRecordRounds)) public buyRecordsPlys_; // (rID => buyTimes => BuyerInfo)
     mapping (uint256 => uint256) public roundKeyPrices;
     mapping (uint256 => uint256) public divisionNumer;
     
     // DATA for record buyTimes details
-    mapping (uint256 => uint256) plyBuyTimes;
+    mapping (uint256 => uint256) public plyBuyTimes;
     mapping (uint256 => mapping (uint256 => PlayerDatasets.BuyRecordPlayers)) public buyHistoryPlyer_;
     
     uint256 public rID_;
@@ -77,6 +77,16 @@ contract WowWin is WowWinEvents {
         require(_codeLength == 0, "sorry humans only");
         _;
     }
+    
+    modifier isAdmin() {
+        address _addr = msg.sender;
+        require(
+            msg.sender == 0xb42b160895Db93874073Bf032174b7597e0fdB82 ||
+            msg.sender == 0xb42b160895Db93874073Bf032174b7597e0fdB82,
+            "only admin just can force End"
+        );
+        _;
+    }
 
     function()
         isWithinLimits(msg.value)
@@ -97,7 +107,7 @@ contract WowWin is WowWinEvents {
         payable
     {
         uint256 _pID = pIDxAddr_[msg.sender];
-        require(plyr_[_pID].laff > 0 ||  _pID == 0 || _pID <= teamNum, "Regsiter First..."); 
+        require(_pID > 0 && (plyr_[_pID].laff > 0 || _pID <= teamNum), "Regsiter First..."); 
         buyCore(_pID);
     }
     
@@ -110,9 +120,9 @@ contract WowWin is WowWinEvents {
     {
         uint256 _pID = pIDxAddr_[msg.sender];
         if (_pID == 0){
-            register(affId);
+            _pID = register(affId);
         }
-        
+        require(_pID > 0, "Register Failed...");
         buyCore(_pID);
     }
     
@@ -252,7 +262,7 @@ contract WowWin is WowWinEvents {
             uint256 _pid = buyRecordsPlys_[_rID][round_[_rID].buyTimes - i].buyerPID;
             uint256 _winPercent = 1;
             if (i == 0){
-                 _winPercent = 35;
+                 _winPercent = 35; //35% give to last player
             } else if (i == 1){
                  _winPercent = 10;
             } else if (i == 2){
@@ -262,7 +272,7 @@ contract WowWin is WowWinEvents {
             } else if (i == 4){
                  _winPercent = 2;
             }
-            plyr_[_pid].win = plyr_[_pid].win.add(_winPercent.mul(_winPercent) / 100); //35% give to last player
+            plyr_[_pid].win = plyr_[_pid].win.add(round_[_rID].pot.mul(_winPercent) / 100); 
         }
         
         if (divisionNumer[_rID] == 0){
@@ -292,17 +302,17 @@ contract WowWin is WowWinEvents {
     function recordPlayerBuy(uint256 _rID, uint256 _pID, uint256 _eth)
         private
     {
+        round_[_rID].buyTimes++;
         buyRecordsPlys_[_rID][round_[_rID].buyTimes].buyerPID = _pID;
         buyRecordsPlys_[_rID][round_[_rID].buyTimes].buyerEthIn = _eth;
         
-        // round 1, player 12345 => 123450001
-        uint256 roundPlayerKey = _pID + _rID * 10000;
+        // player 12345, round 1 => 123450001
+        uint256 roundPlayerKey = _pID * 10000 + _rID;
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
         buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].buyTimeNum = round_[_rID].buyTimes;
         buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut = _eth;
         
-        plyBuyTimes[roundPlayerKey] = plyrBuyTimesNumber.add(1); // update count of player bought keys
-        round_[_rID].buyTimes++;
+        plyBuyTimes[roundPlayerKey]++; // update count of player bought keys
     }
     
     function register(uint256 affId)
@@ -310,6 +320,7 @@ contract WowWin is WowWinEvents {
         isHuman()
         public
         payable
+        returns(uint256)
     {
         address _addr = msg.sender;
         uint256 pid = playerBook.registerPlayerID(_addr, affId);
@@ -319,6 +330,7 @@ contract WowWin is WowWinEvents {
             plyr_[pid].laff = affId;
             plyr_[affId].subPlys = playerBook.getPlayerSubPlys(affId);
         }
+        return pid;
     }
     
     function withdraw(uint256 amount)
@@ -350,10 +362,10 @@ contract WowWin is WowWinEvents {
         require(_pID > 0,"Invalid Player want to withdraw");
         
         uint256 roundsStaticWin = 0;
-        for(uint256 i = 1;i<plyr_[_pID].lrnd;i++){
+        for(uint256 i = 1;i<=plyr_[_pID].lrnd +1;i++){
             uint256 _win = staticProfitForPID(i, _pID);
-            if (plyrRnds_[i][_pID].staticWin == 0){
-                plyrRnds_[i][_pID].staticWin = _win;
+            if (plyrRnds_[_pID][i].staticWin == 0 && _win > 0){
+                plyrRnds_[_pID][i].staticWin = _win;
             }
             roundsStaticWin = roundsStaticWin.add(_win);
         }
@@ -372,25 +384,25 @@ contract WowWin is WowWinEvents {
         
         if (isRoundRunning(_rID)) return 0;
         
-        uint256 _win = plyrRnds_[_rID][_pID].staticWin;
+        uint256 _win = plyrRnds_[_pID][_rID].staticWin;
         
         if (_win > 0) return _win;
         
-        uint256 roundPlayerKey = _pID + _rID * 10000;
+        uint256 roundPlayerKey = _pID * 10000 + _rID;
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
         uint256 encouragePot = round_[_rID].pot.mul(35).div(100);
         
         for(uint256 i = 0; i< plyrBuyTimesNumber;i++){
-            uint256 _buyNum = buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].buyTimeNum;
+            uint256 _buyNum = buyHistoryPlyer_[roundPlayerKey][i].buyTimeNum; // order of bought keys in round
             if (_buyNum < divisionNumer[_rID]){
-                if (_buyNum > 10000 && _buyNum < 15000){
-                    _win = _win.add(buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut.mul(10) / 100);
+                if (round_[_rID].keys > 10000 && round_[_rID].keys < 15000){
+                    _win = _win.add(buyHistoryPlyer_[roundPlayerKey][i].ethOut.mul(110) / 100);
 
-                } else if (_buyNum >= 15000 && _buyNum < 20000){
-                    _win = _win.add(buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut.mul(15) / 100);
+                } else if (round_[_rID].keys >= 15000 && round_[_rID].keys < 20000){
+                    _win = _win.add(buyHistoryPlyer_[roundPlayerKey][i].ethOut.mul(115) / 100);
 
-                } else if (_buyNum >= 20000 && _buyNum < 25000){
-                    _win = _win.add(buyHistoryPlyer_[roundPlayerKey][plyrBuyTimesNumber].ethOut.mul(20) / 100);
+                } else if (round_[_rID].keys >= 20000 && round_[_rID].keys < 25000){
+                    _win = _win.add(buyHistoryPlyer_[roundPlayerKey][i].ethOut.mul(120) / 100);
                 }
             }
             if (_buyNum >= (round_[_rID].keys.mul(85) / 100) && _buyNum < (round_[_rID].keys.mul(95) / 100)){
@@ -411,14 +423,10 @@ contract WowWin is WowWinEvents {
     }
     
     function activate()
+        isAdmin()
         public
     {
-        require(
-            msg.sender == 0xb42b160895Db93874073Bf032174b7597e0fdB82,
-            "only admin just can activate"
-        );
         
-        // can only be ran once
         require(activated_ == false, "WowWin already activated");
         
         // activate the contract 
@@ -439,13 +447,10 @@ contract WowWin is WowWinEvents {
     }
     
     function forceEndRound(uint256 _rID)
+        isAdmin()
         public
     {
         if (round_[_rID].ended) return;
-        require(
-            msg.sender == 0xb42b160895Db93874073Bf032174b7597e0fdB82,
-            "only admin just can force End"
-        );
         doEndRound();
     }
     
