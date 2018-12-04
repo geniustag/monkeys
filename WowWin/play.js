@@ -15,7 +15,7 @@ window.addEventListener('load', function() {
 
 var abi = [];
 
-var address = "0xa0d7750671cb616b02ed9e6337f374591efd363a",
+var address = "0x9da20c1a663464f0f0223f8235e08e8e358c6788",
     GameContract = web3.eth.contract(abi),
     Game = GameContract.at(address),
     KeyPrice = 0,
