@@ -1,13 +1,16 @@
 E = EthereumRpc
-WOW_ADDRESS = "0xb02d421c38c62dcac5f0c1dc1a4d2954993807f1"
 ROUND_ID = 1
 AffID = 1
 
-KEY_PRICE = lambda {E.eth_call([{to: WOW_ADDRESS, data: "0xb1cd2608000000000000000000000000000000000000000000000000000000000000000#{ROUND_ID}"}])}
+def wow_address
+  lambda {"0xb02d421c38c62dcac5f0c1dc1a4d2954993807f1"}
+end
+
+KEY_PRICE = lambda {E.eth_call([{to: wow_address.call, data: "0xb1cd2608000000000000000000000000000000000000000000000000000000000000000#{ROUND_ID}"}])}
 
 BasePS = {
   from: E.eth_coinbase,
-  to: WOW_ADDRESS,
+  to: wow_address.call,
   gasPrice: "0x4A817C800",
   gas: "0xf4240"
 }
@@ -33,3 +36,5 @@ def calc_profits(address)
   _ps = BasePS.merge(data: "0x541ebca8", from: address)
   E.eth_sendTransaction([_ps])
 end
+
+

@@ -391,21 +391,22 @@ contract WowWin is WowWinEvents {
         uint256 roundPlayerKey = _pID * 10000 + _rID;
         uint256 plyrBuyTimesNumber = plyBuyTimes[roundPlayerKey];
         uint256 encouragePot = round_[_rID].pot.mul(35).div(100);
+        // uint256 bonusPotPerProfit = round_[_rID].bonusPot / divisionNumer[_rID];
         
         for(uint256 i = 0; i< plyrBuyTimesNumber;i++){
             uint256 _buyNum = buyHistoryPlyer_[roundPlayerKey][i].buyTimeNum; // order of bought keys in round
+        
             if (_buyNum < divisionNumer[_rID]){
-                if (round_[_rID].keys > 10000 && round_[_rID].keys < 15000){
+                // if (round_[_rID].keys > 10000 && round_[_rID].keys < 15000){
+                if (round_[_rID].keys > 1000 && round_[_rID].keys < 15000){
                     _win = _win.add(buyHistoryPlyer_[roundPlayerKey][i].ethOut.mul(110) / 100);
-
                 } else if (round_[_rID].keys >= 15000 && round_[_rID].keys < 20000){
                     _win = _win.add(buyHistoryPlyer_[roundPlayerKey][i].ethOut.mul(115) / 100);
-
                 } else if (round_[_rID].keys >= 20000 && round_[_rID].keys < 25000){
                     _win = _win.add(buyHistoryPlyer_[roundPlayerKey][i].ethOut.mul(120) / 100);
                 }
             }
-            if (_buyNum >= (round_[_rID].keys.mul(85) / 100) && _buyNum < (round_[_rID].keys.mul(95) / 100)){
+            if (_buyNum > (round_[_rID].keys.mul(85) / 100) && _buyNum < (round_[_rID].keys.mul(95) / 100)){
                 _win = _win.add( encouragePot.div(round_[_rID].keys.div(10)) );
             }
         }
