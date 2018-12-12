@@ -4,10 +4,10 @@ require 'mina/git'
 require 'mina/rvm'
 require 'mina/slack/tasks'
 
-set :repository, 'git@github.com:geniustag/XNodes-admin.git'
+set :repository, 'git@github.com:geniustag/monkeys.git'
 set :user, 'deploy'
-set :deploy_to, '/home/deploy/projects/xnodes-admin'
-domains = %w(18.221.12.158)
+set :deploy_to, '/home/deploy/projects/dapp'
+domains = %w(18.216.165.30)
 
 def rails_env
   ENV['env']
