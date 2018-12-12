@@ -1,0 +1,16 @@
+- us = @accounts || accounts
+table class='#{table_class} list-table' 
+  thead
+    th Member
+    th Address
+    th Token
+    th Balance
+    th Locked
+  - us.each_with_index do |obj, i|
+    tr
+      td = obj.currency_text
+      td = link_to obj.member.display_name, admin_member_path(obj.member_id)
+      td = obj.address
+      td = obj.balance
+      td = obj.locked
+= paginate(ws) rescue nil

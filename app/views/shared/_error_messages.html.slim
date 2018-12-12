@@ -1,0 +1,10 @@
+- if target.errors.any?
+  .alert.alert-danger role="alert"
+    a.close data-dismiss='alert' href="#"
+     | x
+    p
+      strong
+        = "#{target.errors.count}个错误！"
+    ol
+      - target.errors.full_messages.each do |msg|
+        li = msg

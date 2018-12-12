@@ -1,0 +1,12 @@
+- if single_obj.is_a?(Role) 
+  - if !single_obj.is_admin?
+    tr
+      td 菜单配置
+      td.check_boxes = permission_collections :role, :resource_ids, Resource.supers
+    tr
+      td 权限配置
+      td.check_boxes = permission_collections :role, :resource_ids, Resource.sub_menus
+  - if update_page?
+    tr
+      td 该角色用户
+      td.check_boxes = permission_collections :role, :user_ids, Member.all

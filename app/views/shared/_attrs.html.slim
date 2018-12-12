@@ -1,0 +1,7 @@
+- klass.used_attrs(@attr_type || action_name).each do |att|  
+  tr
+    td = title = localize_attr(att)
+    - opts = {}
+    td 
+      = klass.respond_to?(:special_attrs) && klass.special_attrs.include?(att.to_s) ? \
+        render(partial: "admin/#{controller_name}/special_attrs", locals: {f: f, attr_name: att}) : awesome_fileds(att, f, opts) 

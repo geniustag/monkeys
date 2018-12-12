@@ -1,0 +1,116 @@
+sms:
+  account:
+    development:
+      sms_host:  "https://sandboxapp.cloopen.com:8883"
+      soft_version:  '2013-12-26'
+      account_sid:  "aaf98f8953ea8e8c0154006369fd2438"
+      account_token:  "3f31a022d49d4d3ca31fb80660441e6f"
+      app_id:  "8a48b55153eae51101540065770b2148"
+      admin_phone: 15810762491
+    dev:
+      sms_host:  "https://sandboxapp.cloopen.com:8883"
+      soft_version:  '2013-12-26'
+      account_sid:  "aaf98f8953ea8e8c0154006369fd2438"
+      account_token:  "3f31a022d49d4d3ca31fb80660441e6f"
+      app_id:  "8a48b55153eae51101540065770b2148"
+      admin_phone: 15810762491
+    production:
+      sms_host:  "https://app.cloopen.com:8883"
+      soft_version:  '2013-12-26'
+      account_sid:  "aaf98f8953ea8e8c0154006369fd2438"
+      account_token:  "3f31a022d49d4d3ca31fb80660441e6f"
+      app_id:  "8aaf070862b902de0162be7e32dc041f"
+      admin_phone: "15810762491"
+  templates:
+    auth_code: 243676
+    retirement_report_notify: 94013
+    education_report_notify: 105360
+    static_page_notice: 106091
+    static_page_post: 106093
+    static_page_productinfo: 106096
+  codes:
+    "000000": "成功"
+xasms:
+  account:
+    development:
+      uid: 1
+      code: "c" 
+      pass: "c" 
+      url: "http://sms.10690221.com/hy/"
+    dev:
+      uid: 1
+      code: "c" 
+      pass: "c" 
+      url: "http://sms.10690221.com/hy/"
+    production:
+      uid: 901791
+      code: ""
+      pass: ""
+      url: "http://sms.10690221.com/hy/"
+host:
+  development: "http://localhost:5000"
+  dev: "https://dev.tagq.org"
+  production: "http://grearn.tagq.org"
+mail:
+  defaults: &defaults
+    smtp_server: "smtp.qq.com"
+    smtp_port: 465
+    smtp_domain: "qq.com"
+    smtp_user_name: "geniustag@qq.com"
+    smtp_user_pass: "dkemordjgpwichfi"
+    mail_from: "support@tagq.org"
+    mail_reply: "support@tagq.org"
+  development:
+    <<: *defaults
+  dev:
+    <<: *defaults
+  production:
+    <<: *defaults
+umeng:
+  defaults: &defaults
+    android:
+      app_key: "5ae18d88f29d98468e000122"
+      app_secret: "5nog4tsfkrwlhatcvqagadxixjk9boom"
+      prod_mode: false
+    ios:
+      app_key: "5adffdebf43e484fb700003f"
+      app_secret: "lib7fl9scrlfsag9gr5qegzj6l7acurv"
+      prod_mode: false
+  development:
+    <<: *defaults
+  dev:
+    <<: *defaults
+  production:
+    android:
+      app_key: "5ae18d88f29d98468e000122"
+      app_secret: "5nog4tsfkrwlhatcvqagadxixjk9boom"
+      prod_mode: true
+    ios:
+      app_key: "5adffdebf43e484fb700003f"
+      app_secret: "lib7fl9scrlfsag9gr5qegzj6l7acurv"
+      prod_mode: true
+contract:
+  development:
+    address:
+      gst: "0x17fe710e01cd60003310b7563a2ca442f35fc04b"
+    owner: 
+      gst: "0xc3b46cd396337a4b4e4d8aa87dd2db16b22397ae"
+    # address:
+    #   gst: "0x7f26966f08c571bfb3c202574dbbad2f3510dce6"
+    # owner: 
+    #   gst: "0x86911686e606fd36abc2a6d38ba4de3dc7778328"
+  dev:
+    address:
+      gst: "0x17fe710e01cd60003310b7563a2ca442f35fc04b"
+    owner: 
+      gst: "0xc3b46cd396337a4b4e4d8aa87dd2db16b22397ae"
+  test:
+    address:
+      gst: "0xa4de302c67ec17be92ed48ba099dbf1bec4f50a3"
+    owner: 
+      gst: "0x1f7c42c2c5515cdc8f534162a93eb3d91eed287e"
+  production:
+    address:
+      gst: "0x3afa1902b1f8a802abc18e5ad982d1bcd34afe22"
+    owner:
+      gst: "0xcdb916755802e41568cd20b0cd8540f31eaeed25"

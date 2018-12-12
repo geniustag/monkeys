@@ -1,0 +1,4 @@
+= page_header t(controller_name + "_manage") 
+- if %w(app_versions servers services).include?(controller_name)
+  .m10 = link_to_btn title: t(:new) + t(obj_str), url: send(:"new_admin_#{obj_str}_path")
+.am-padding = render "shared/index_table"

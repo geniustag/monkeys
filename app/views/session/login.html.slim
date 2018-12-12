@@ -1,0 +1,10 @@
+= form_tag login_path, id: "login-form", class: "clearfix" do
+  .margin
+    .alert-error.alert#alert style="display:#{ @error_login ? "" : "none"}"
+      = @error_login || flash[:notice]
+    .well.login
+      dt = t :email
+      dd = text_field_tag :login, @login
+      dt = t(:password)
+      dd = password_field_tag :password
+      dd.margin = submit_tag t(:login), class: link_btn

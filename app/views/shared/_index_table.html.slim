@@ -1,0 +1,17 @@
+- if collections.empty?                                                                                   
+  .m10: h3 无数据                                                                                         
+- else 
+  table class='#{table_class} list-table' 
+    thead
+      = table_th_columns(:th)
+      th = t(:actions)
+    - collections.each_with_index do |obj, i|
+      tr
+        = values_for_columns(obj)
+        td
+          - if current_user.is_admin?
+            - if %w(members).include?(controller_name)
+              .mr10.inline = edit_with_delete(obj)
+          = info_link(obj)
+          = render partial: "admin/#{controller_name}/actions", locals: {obj: obj} if klass.respond_to?(:special_actions)
+  = paginate(collections)

@@ -1,0 +1,8 @@
+= page_header @title || t(action_name) + t(obj_str)
+.am-margin
+  = form_for [:admin, single_obj], html:{ multipart: true , class: "am-form"} do |f|
+    = render partial: 'shared/error_messages', locals: { target: single_obj }
+    table class='#{table_class}'
+      = render partial: "shared/attrs", locals: {f: f}
+      = render partial: "shared/permissions", locals: {f: f} 
+    = save_and_return(f)

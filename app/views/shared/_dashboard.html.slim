@@ -1,0 +1,44 @@
+table class='#{table_class} list-table' style='width: 800px'
+  tr
+    td 总用户数
+    td = Member.count
+  tr
+    td 用户余额
+    td
+      table class='#{table_class}'
+        tr
+          td Currency
+          td User Balance
+          td User Locked
+          td Admin Balance
+        - Currency.all.each do |a|
+          - s = a.summary
+          tr
+            td = a.code.upcase
+            td = s[:balance]
+            td = s[:locked]
+            td = a.admin_balance
+table class='#{table_class} list-table' style='width: 1100px'
+  tr
+    td 挂单详情
+    td
+      table class='#{table_class}'
+        tr
+          td MarketPair
+          td 挂单数量
+          td 挂单详情
+          td 用户挂单数量
+          td 用户挂单详情
+        - Market.all.each do |a|
+          - os = Order.active.where(currency: a.id)
+          - user_os = os.select{|a| a.member_id != Order::OWNER.try(:id) }
+          tr
+            td = a.name
+            - [os, user_os].each do |oos|
+              td = link_to oos.size, "/admin/markets/depth?m=#{a.id}"
+              td 
+                table
+                  - orders_summery(oos).each do |k,v|
+                    tr
+                      td = k
+                      td = v.to_json

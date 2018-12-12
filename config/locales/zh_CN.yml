@@ -1,0 +1,302 @@
+  # Files in the config/locales directory are used for internationalization
+# and are automatically loaded by Rails. If you want to use locales other
+# than English, add the necessary files in this directory.
+#
+# To use the locales, use `I18n.t`:
+#
+#     I18n.t 'hello'
+#
+# In views, this is aliased to just `t`:
+#
+#     <%= t('hello') %>
+#
+# To use a different locale, set it with `I18n.locale`:
+#
+#     I18n.locale = :es
+#
+# This would use the information in config/locales/es.yml.
+#
+# To learn more, please read the Rails Internationalization guide
+# available at http://guides.rubyonrails.org/i18n.html.
+
+zh_CN:
+
+  save: 保存
+  home: 首页
+  submit: 提交
+  back: 返回
+  new: 新建
+  create: 创建
+  update: 更新
+  edit: 编辑
+  index_num: 编号
+  actions: 操作
+  show: ""
+  system_name: Sun Admin
+  website_title: Sun Admin
+  company: Sun Admin 
+
+  admin_manage: Admin管理 
+  roles_manage: 角色管理
+  roles: 角色管理
+  role: 角色
+  resources_manage: 权限管理
+  resources: 权限管理
+  resource: 权限
+  members_manage: 用户管理
+  members: 用户管理
+  member: 用户
+  trade_bots_manage: 交易机器人
+  trade_bots: 交易机器人
+  trade_bot: 交易机器人
+  accounts_manage: 账户管理
+  accounts: 账户管理
+  account: 账户
+  withdraws_manage: 提现管理
+  withdraws: 提现管理
+  withdraw: 提现
+  deposits_manage: 充值管理
+  deposits: 充值管理
+  deposit: 充值
+  logs: 日志管理
+  user_logs_manage: API请求日志
+  user_logs: API请求日志
+  user_log: API请求日志
+  settings_manage: 全局设置
+  settings: 全局设置
+  setting: 全局设置
+  currencys_manage: 货币
+  currencys: 货币
+  currency: 货币
+  markets_manage: 交易对
+  markets: 交易对
+  market: 交易对
+  trades_manage: 交易
+  trades: 交易
+  trade: 交易
+  orders_manage: 订单
+  orders: 订单
+  order: 订单
+  id_documents_manage: 实名认证管理
+  id_documents: 实名认证
+  id_document: 实名认证
+  app_versions_manage: "客户端版本"
+  app_versions: "客户端版本"
+  app_version: "客户端版本"
+  account_versions_manage: 账单
+  account_versions: 账单
+  account_version: 账单
+  servers_manage: "服务器管理"
+  servers: "服务器"
+  server: "服务器"
+  services_manage: "后台服务管理"
+  services: "后台服务"
+  service: "后台服务"
+  feedback: "问题反馈"
+  feedbacks: "问题反馈"
+  feedbacks_manage: "问题反馈"
+  statistics: 数据统计
+
+  sort_success: 排序成功！
+  query: 查询 
+  stats: 统计分析 
+  logout: 注销 
+  login: 登陆 
+  login_failed: 账号或密码不正确
+  email: 邮箱 
+  password: 密码 
+  permission_denied: 您无此权限
+  coinmarket: 市场
+
+  withdraw_states:
+    aasm_state:
+      submitting: 待确认
+      submitted: 待校验
+      rejected: 已驳回
+      accepted: 已提交
+      suspect: 异常
+      processing: 受理中
+      done: 提现成功
+      almost_done: 发送中
+      canceled: 已撤销
+      failed: 提现出错
+
+  awesome_form_attributes:
+    displayed_columns:
+      member:
+        sn: 标号
+        email: Email
+        name: Name
+        phone_with_country: Phone
+        created_at: 注册时间
+        disabled: Disabled
+      user_log:
+        user_name: 用户名
+        method: Method
+        url: 访问地址
+        params: 参数
+        device_with_version: 版本
+        created_at: 访问时间
+      deposit:
+        short_txid: Hash
+        member_id: 用户名
+        short_address: Address
+        currency: Currency
+        state: State
+        aasm_state: AASM_STATE
+        amount: amount
+        fee: fee
+        created_at: 时间
+      withdraw:
+        fund_uid: 提现地址
+        member_id: User
+        currency: Currency
+        amount: amount
+        fee: fee
+        aasm_state: AASM_STATE
+        created_at: 时间
+      trade_bot:
+        endpoint: Endpoint
+        api_key: APIKey
+        fake_secret: Secret
+      order:
+        market_code: Market
+        state: 状态
+        type: type
+        member_id: User ID
+        ord_type: OrderType
+        price: 价格
+        origin_volume: 挂单量
+        finish_volume: 已成交
+        # funds_used: 成交额
+        trades_amount: 成交额
+        fee_detail: 手续费
+        time: 时间
+        trades_count: 交易笔数
+      market:
+        name: Pair
+        bid: 买方设置
+        ask: 卖方设置
+        price_precision: 价格精度
+        volume_precision: 成交量精度
+        position: 排序
+      currency:
+        code: Code
+        extra: 备注
+      trade:
+        market_code: market
+        price: 成交价
+        volume: 成交量
+        time: 时间
+        ask_member_id: 卖方id
+        bid_member_id: 买方id
+        ask_id: 卖方Orderid
+        bid_id: 买方Orderid
+      id_document: 
+        member_id: 用户
+        id_document_number: 认证号码
+        address: 地址
+        city: 城市
+        country: 国家
+        aasm_state: 状态
+      server:
+        ip: IP
+        memory_desc: 内存
+        services_num: 后台服务数
+        stopped_services: 服务异常
+      account_version:
+        created_at: Created_at
+        currency_text: Currency
+        member_id: Member
+        modifiableid: ModifiableId
+        modifiable_type: ModifiableType
+        reason_text: Reason
+        fee: Fee
+        balance: Balance
+        locked: Locked
+        amount: Amount
+      api_token: 
+        member_id: 用户
+        access_key: AccessKey
+        secret_key: Secret
+      feedback: 
+        member_id: 用户
+        contact_info: 联系方式
+        note: 反馈内容
+        created_at: 时间
+      account: 
+        member_id: 用户
+        address: Address
+        balance: 余额
+        locked: locked
+
+  views:
+    pagination:
+      first: 首页
+      previous: 上一页
+      next: 下一页
+      last: 末页
+      truncate: "..."
+
+  activerecord:
+    models:
+      role: 角色
+      resource: 权限 
+      member: 用户
+      app_version: "客户端版本"
+    attributes:
+      member:
+        email: 电子邮件
+        phone: 手机
+        name: 真实姓名
+      trade_bot:
+        type: Type
+        endpoint: Endpoint
+        api_key: APIKey
+        secret: Secret
+      market:
+        base_unit: BaseUnit
+        quote_unit: QuoteUnit
+        bid_json: 买方设置
+        ask_json: 卖方设置
+        price_precision: 价格精度
+        volume_precision: 成交量精度
+        position: 排序
+        visible: 是否可交易
+      currency:
+        code: 代号
+        key: Key
+        extra_json: 备注
+        platform: 平台
+      setting:
+        name: 备注
+        key: Key
+        values: 值
+      app_version:
+        cat: "类别"
+        note: "升级说明"
+        version: "版本号"
+        file: App文件路径
+        need_update: "是否强制更新"
+      server:
+        ip: IP
+        note: 备注
+      service:
+        server_id: 服务器
+        name: 服务名
+        status: 状态
+        note: 备注
+      user_log:
+        extra_info: 其他信息
+
+  errors:
+    messages:
+      accepted: 必须是可被接受的
+      blank: 不能为空
+      present: 必须是空白
+      confirmation: 与确认值不匹配
+      empty: 不能留空
+      inclusion: 不是规定的内容
+      taken: 不能重复
+      too_short: 太短
+      invalid: 格式不正确
