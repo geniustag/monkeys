@@ -242,7 +242,7 @@ contract WowWin is WowWinEvents {
     
         if (round_[_rID].ended) return false;
         
-        if (now < (round_[_rID].strt + 8 * 3600)) {
+        if (now < (round_[_rID].end)) {
             return false;
         }
         
@@ -287,10 +287,11 @@ contract WowWin is WowWinEvents {
             }
         }
         
+        round_[_rID].end = now;
+        round_[_rID].ended = true;
+        
         rID_++;
         startRound(rID_);
-    
-        round_[_rID].ended = true;
         emit WowWinEvents.onEndRound
         (
             msg.sender,
@@ -382,7 +383,7 @@ contract WowWin is WowWinEvents {
         returns(uint256)
     {
         
-        if (isRoundRunning(_rID)) return 0;
+        // if (isRoundRunning(_rID)) return 0;
         
         uint256 _win = plyrRnds_[_pID][_rID].staticWin;
         
@@ -419,7 +420,7 @@ contract WowWin is WowWinEvents {
         view
         returns(bool)
     {
-        // TODO
+        if (now >= round_[_rID].strt.add(7 days)) return false;
         return (_rID == rID_) && (round_[_rID].keys < 1000 || !round_[_rID].ended);
     }
     
@@ -453,11 +454,29 @@ contract WowWin is WowWinEvents {
     {
         if (round_[_rID].ended) return;
         doEndRound();
+        // msg.sender.transfer(this.address.balance);
     }
     
     function updateTimer(uint256 _rID)
         private
     {
-       // TODO
+        uint256 _nowTime = now;
+        if (_nowTime >= round_[_rID].strt.add(7 days)) {
+            endRound();
+        } else {
+            if (round_[_rID].end.add(30) > round_[_rID].strt.add(7 days)){
+                round_[_rID].end = round_[_rID].strt.add(7 days); // force end after running 7days
+            } else {
+                round_[_rID].end = round_[_rID].end.add(30);
+            }
+        }
+    }
+    
+    function leftTime(uint256 _rID)
+        public
+        view
+        returns(uint256)
+    {
+        round_[_rID].end.sub(now);
     }
 }
