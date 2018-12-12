@@ -9,7 +9,6 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
-    aasm (3.4.0)
     actionmailer (4.0.12)
       actionpack (= 4.0.12)
       mail (~> 2.5, >= 2.5.4)
@@ -183,7 +182,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  aasm (~> 3.4.0)
   awesome_form_attributes (= 1.2.4)
   awesome_print
   bcrypt

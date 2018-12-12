@@ -1,17 +1,4 @@
 # encoding: utf-8
-Member.create(name: 'admin', email: 'admin@admin.com', password: '123456') if Member.count == 0
-# add withdraw data
-Member.find(4).accounts.each do |ac|
-  10.times do
-    w=Withdraw.new(
-        account_id: ac.id,
-        member_id: ac.member_id,
-        currency: ac.currency_obj.id,
-        amount: amount = rand(ac.balance/1000),
-        fee: 0.001,
-        sum: amount,
-        fund_uid: 'xxxxxxxxxxxxxxxxx',
-    )
-    w.save!
-  end
-end
+User.create(name: 'admin', email: 'admin@admin.com', phone: 10000000000, password: '123456') if User.count == 0
+Role.create(name: '超级管理员', name_en: 'admin', desc: '超级管理员') if Role.count == 0
+User.first.roles = Role.all
