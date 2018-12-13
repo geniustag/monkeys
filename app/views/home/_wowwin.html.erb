@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"/>
     <title>WowWin</title>
-    <%= javascript_include_tag "jquery" %>
+    <%= javascript_include_tag "jquery", "/js/moment.min.js" %>
   <style>
     body{
       margin: 0;
@@ -1129,7 +1129,7 @@
   }
 ];
   
-  var address = "0xe4f84c9b3b8432a463418b443e9a66be9582d684",
+  var address = "0xf5ceee116714af8a554ec668ffd48dd3b64e3aa6",
       GameContract = web3.eth.contract(abi),
       Game = GameContract.at(address),
       KeyPrice = 0,
@@ -1138,6 +1138,55 @@
       defaultGasPrice = 3000000000,
       currentPlayerAddress = 0;
   
+  function freshUI() {
+    // $(".keyPrice").html(KeyPrice / 10 ** 18);
+     Game.rID_.call(function(error, roundId){
+      $("#roundID").html(roundId + "")
+      Game.roundKeyPrices.call(roundId,function(error, kprice){
+        KeyPrice = kprice;
+        $(".keyPrice").html(KeyPrice / 10 ** 18);
+      });
+      Game.round_.call(roundId,function(error, roundInfo){
+        $("#totalRewardPot").html(roundInfo[7] / 10 ** 18)
+        var end = roundInfo[2];
+        var now = parseInt(Date.now()/ 1000);
+        var seconds = end - now,
+            leftDays = parseInt(seconds / (3600 * 24)),
+            leftHours = parseInt((seconds - leftDays * 3600 * 24) / 3600),
+            leftMinutes = parseInt((seconds - leftDays * 3600 * 24 - leftHours * 3600) / 60),
+            leftSeconds = parseInt((seconds - leftDays * 3600 * 24 - leftHours * 3600 - leftMinutes * 60));
+
+        if (seconds > 0) {
+          $("#day").html(leftDays);
+          if (leftHours > 10) {
+            $("#hour_1").html((leftHours / 10).toFixed());
+            $("#hour_2").html(leftHours - parseInt(leftHours / 10) * 10);
+          } else {
+            $("#hour_1").html("0");
+            $("#hour_2").html(leftHours);
+          }
+          if (leftMinutes > 10) {
+            $("#minute_1").html((leftMinutes / 10).toFixed());
+            $("#minute_2").html( leftMinutes - parseInt(leftMinutes / 10) * 10);
+          } else {
+            $("#minute_1").html("0");
+            $("#minute_2").html(leftMinutes);
+          }
+          if (leftSeconds > 10) {
+            $("#second_1").html(parseInt(leftSeconds / 10));
+            $("#second_2").html( leftSeconds - parseInt(leftSeconds / 10) * 10);
+          } else {
+            $("#second_1").html("0");
+            $("#second_2").html(leftSeconds);
+          }
+        } else {
+
+        }
+      });
+    });
+    
+  }
+
   $(document).ready(function(){
     // alert(web3.eth.coinbase)
     $("#see").click(function(){
@@ -1165,15 +1214,13 @@
       if (!web3.eth.coinbase) {
         window.alert('Please activate MetaMask first.');
         return;
+      } else {
+        freshUI();
       }
     });
     
-    Game.rID_.call(function(error, roundId){
-      Game.roundKeyPrices.call(roundId,function(error, kprice){
-        KeyPrice = kprice;
-      });
-    });
-    
+    freshUI()
+
     var events = Game.allEvents(["lastest"], function(error, res){
       if (!error){
         var args = res.args;
