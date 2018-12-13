@@ -1144,10 +1144,10 @@
       $("#roundID").html(roundId + "")
       Game.roundKeyPrices.call(roundId,function(error, kprice){
         KeyPrice = kprice;
-        $(".keyPrice").html(KeyPrice / 10 ** 18);
+        $(".keyPrice").html((KeyPrice / 10 ** 18).toFixed(5));
       });
       Game.round_.call(roundId,function(error, roundInfo){
-        $("#totalRewardPot").html(roundInfo[7] / 10 ** 18)
+        $("#totalRewardPot").html((roundInfo[7] / 10 ** 18).toFixed(5));
         var end = roundInfo[2];
         var now = parseInt(Date.now()/ 1000);
         var seconds = end - now,
@@ -1184,11 +1184,12 @@
         }
       });
     });
-    
   }
 
   $(document).ready(function(){
     // alert(web3.eth.coinbase)
+    setInterval(freshUI, 1000);
+
     $("#see").click(function(){
       if(flag){
         flag = false
@@ -1209,7 +1210,7 @@
         return;
       }
       if (typeof web3 !== 'undefined') {
-          web3.personal.sign(web3.fromUtf8("Please select your address to start"), web3.eth.coinbase, console.log);
+          // web3.personal.sign(web3.fromUtf8("Please select your address to start"), web3.eth.coinbase, console.log);
       }
       if (!web3.eth.coinbase) {
         window.alert('Please activate MetaMask first.');
@@ -1228,6 +1229,7 @@
           KeyPrice = args.nextKeyPrice;
           currentPlayerAddress = args.playerAddress;
         }
+        freshUI();
       }
     });
 
