@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"/>
+    <title>WowWin</title>
+  <style>
+    body{
+      margin: 0;
+      padding: 0;
+    }
+    .wrap{
+      /*width: 375px;*/
+      /*height: 1635px;*/
+      width: 100%;
+      margin: 0 auto;
+      background-image: linear-gradient(-225deg, #41246B 0%, #4159BB 100%);
+      box-shadow: 0px 2px 4px 0px rgba(65,89,187,0.44);
+    }
+    .yuan{
+      width: 375px;
+      margin: 0 auto;
+      height: 363px;
+      background: url("/images/ban.png") no-repeat 8px 0;
+      padding-top: 180px;
+      position: relative;
+      box-sizing: border-box;
+    }
+    .num{
+      width: 100%;
+      height: 36px;
+      color: #0f3c5f;
+      font-family: Futura;
+      font-size: 28px;
+      font-weight: 400;
+      line-height: 36px;
+      text-align: center;
+    }
+    .zi{
+      width:100%;
+      height: 17px;
+      color: #467599;
+      font-family: PingFangSC;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 17px;
+      text-align: center;
+    }
+    .eth{
+      width: 44px;
+      height: 44px;
+      background: url("/images/eth.png") no-repeat ;
+      position: absolute;
+      top:150px;
+      left: 50%;
+      margin-left: -22px;
+      margin-top: -22px;
+    }
+    .jx{
+      width: 335px;
+      height: 332px;
+      background: #fff;
+      /*background-image: linear-gradient(-180deg, #F6F6FF 0%, #EBEBFF 97%);*/
+      border-radius: 16px;
+      margin: -25px  auto 0;
+      z-index: 1;
+      padding-top: 20px;
+      box-sizing: border-box;
+      position: relative;
+    }
+    .tit{
+      width: 100%;
+      height: 24px;
+      line-height: 24px;
+      font-family: PingFangSC-Medium;
+      font-size: 17px;
+      color: #467599;
+      text-align: center;
+    }
+    .time{
+      width: 100%;
+      margin-top: 14px;
+      overflow: hidden;
+      padding-left: 42px;
+      box-sizing: border-box;
+    }
+    .fl{
+      float: left;
+    }
+    .h{
+      width: 24px;
+      height: 42px;
+      background: rgba(32,32,108,0.05) ;
+      border-radius: 3px;
+      margin-left: 2px;
+      line-height: 42px;
+      nt-family: Futura-CondensedMedium;
+      font-size: 22px;
+      color: #0F3C5F;
+      text-align: center;
+      float: left;
+    }
+    .m{
+      width: 18px;
+      height: 42px;
+      font-size: 18px;
+      color: #467599;
+      line-height: 42px;
+      text-align: left;
+      margin-left: 4px;
+      background: #fff;
+      opacity: 0.48;
+      float: left;
+    }
+    .bot{
+      font-family: PingFangSC-Medium;
+      font-size: 10px;
+      color: #8CAAC8;
+      text-align: center;
+    }
+    .line{
+      width: 100%;
+      height: 1px;
+      background: rgba(20,40,60,0.08);
+      margin-top: 18px;
+    }
+    .key{
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    .lef{
+      float: left;
+      width: 204px;
+      height: 52px;
+      background: rgba(0,162,255,0.12);
+      border-radius: 5px;
+      margin-left: 24px;
+    }
+    .key1{
+      width: 63px;
+      height: 29px;
+      background: url("/images/key.png") no-repeat center;
+      margin: 12px 24px 0 15px;
+      float: left;
+    }
+    .key2{
+      float: right;
+      margin-right: 15px;
+    }
+    .dq{
+      font-family: PingFangSC-Medium;
+      font-size: 11px;
+      color: #8CAAC8;
+      text-align: right;
+      margin-top: 9px;
+      line-height: 16px;
+    }
+    .mei{
+      font-family: PingFangSC-Medium;
+      font-size: 9px;
+      color: #467599;
+      text-align: right;
+      line-height: 18px;
+    }
+    .rig{
+      width: 80px;
+      height: 52px;
+      float: left;
+      opacity: 0.44;
+      background: #C9DDFC;
+      border: 0 solid #00A2FF;
+      border-radius: 5px;
+      margin-left: 3px;
+      border: inset 0.5px #00A2FF;
+    }
+    .tg{
+      width: 100%;
+      height: 21px;
+      line-height: 21px;
+      margin-top: 12px;
+      font-family: PingFangSC-Medium;
+      font-size: 15px;
+      color: #00A2FF;
+      text-align: center;
+    }
+    .zd{
+      width: 100%;
+      height: 16px;
+      line-height: 16px;
+      font-family: PingFangSC-Medium;
+      font-size: 11px;
+      color: #8CAAC8;
+      text-align: center;
+    }
+    .ts{
+      width: 287px;
+      height: 32px;
+      line-height: 16px;
+      font-family: PingFangSC-Medium;
+      font-size: 11px;
+      color: #8CAAC8;
+      margin: 6px auto 10px;
+    }
+    .zf{
+      width: 287px;
+      height: 48px;
+      background: #00A2FF;
+      border-radius: 5px;
+      font-family: PingFangSC-Semibold;
+      font-size: 17px;
+      color: #FFFFFF;
+      text-align: center;
+      line-height: 48px;
+      margin: 0 auto;
+    }
+    .se{
+      width: 335px;
+      height: 340px;
+      background: #EBEBFF;
+      border-radius: 16px;
+      margin: 6px auto;
+      padding-left: 26px;
+      padding-top: 26px;
+      box-sizing: border-box;
+    }
+    .lj{
+      width: 287px;
+      height: 56px;
+      overflow: hidden;
+    }
+    .ljl{
+      float: left;
+      width: 150px;
+    }
+    .lj1{
+      width: 100%;
+      height: 16px;
+      font-family: PingFangSC-Medium;
+      font-size: 11px;
+      color: #8CAAC8;
+      line-height: 16px;
+      text-align: left;
+    }
+    .lj2{
+      width: 100%;
+      height: 35px;
+      line-height: 35px;
+      text-align: left;
+      font-family: Futura-CondensedMedium;
+      font-size: 28px;
+      color: #0F3C5F;
+      margin-top: 5px;
+    }
+    .see{
+      width: 24px;
+      height: 24px;
+      float: right;
+      background: url("/images/eyes-K.png") no-repeat;
+    }
+    .items{
+      width: 287px;
+      margin-top: 20px;
+    }
+    .item{
+      width: 100%;
+      height: 21px;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+    .itl{
+      font-family: PingFangSC-Medium;
+      font-size: 15px;
+      color: #467599;
+      text-align: left;
+      line-height: 21px;
+      float: left;
+      margin-right: 23px;
+      font-weight: 500;
+    }
+    .itr{
+      font-family: Futura-CondensedMedium;
+      font-size: 16px;
+      color: #0F3C5F;
+      line-height: 21px;
+      float: left;
+    }
+    .tb{
+      width: 287px;
+      height: 48px;
+      background: #00A2FF;
+      border-radius: 5px;
+      font-family: PingFangSC-Semibold;
+      font-size: 17px;
+      color: #FFFFFF;
+      text-align: center;
+      line-height: 48px;
+      margin-top: 20px;
+    }
+    .fs{
+      width: 337px;
+      line-height: 18px;
+      font-family: PingFangSC-Medium;
+      font-size: 13px;
+      color: #FFFFFF;
+      text-align: center;
+      margin: 14px auto;
+    }
+    .end{
+      font-family: PingFangSC-Medium;
+      font-size: 10px;
+      color: #FFFFFF;
+      letter-spacing: 0;
+      text-align: center;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="yuan">
+    <div class="eth"></div>
+    <div class="num" id="totalRewardPot">0</div>
+    <div class="zi">奖池ETH数量</div>
+  </div>
+  <div class="jx">
+    <div class="tit">距离第<span id="roundID">1</span>轮结束还剩</div>
+    <div class="time">
+      <div class="fl day">
+        <div class="h" id="day">0</div>
+        <div class="bot">Day</div>
+      </div>
+      <div class="m" id="hour">:</div>
+      <div class="fl hour">
+        <div class="h" id="hour_1">0</div>
+        <div class="h" id="hour_2">0</div>
+        <div class="bot">Hours</div>
+      </div>
+      <div class="m">:</div>
+      <div class="fl hour" id="minute">
+        <div class="h" id="minute_1">0</div>
+        <div class="h" id="minute_2">0</div>
+        <div class="bot">Minutes</div>
+      </div>
+      <div class="m">:</div>
+      <div class="fl hour" id="second">
+        <div class="h" id="second_1">0</div>
+        <div class="h" id="second_2">0</div>
+        <div class="bot">Seronds</div>
+
+      </div>
+    </div>
+    <div class="line"></div>
+    <div class="key">
+      <div class="lef">
+        <div class="key1"></div>
+        <div class="key2">
+          <div class="dq">当前KEY价</div>
+          <div class="mei"><span class="keyPrice">0.1</span>ETH/枚</div>
+        </div>
+      </div>
+      <div class="rig">
+        <div class="tg">托管</div>
+        <div class="zd">自动抢KEY</div>
+      </div>
+    </div>
+    <div class="ts">友情提示：应市场需求，保证winner生态平衡，每次抢购的KEY单价会持续增长</div>
+    <div class="zf">支付<span class="keyPrice">0.1</span>ETH</div>
+  </div>
+  <div class="se">
+    <div class="lj">
+      <div class="ljl">
+        <div class="lj1">累计收益</div>
+        <div class="lj2"><span id="totalProfit">0</span>ETH</div>
+      </div>
+      <div class="see"></div>
+    </div>
+    <div class="line"></div>
+    <div class="items">
+      <div class="item">
+        <div class="itl">持有KEY</div>
+        <div class="itr"><span id="totalKey">0</span>KEY</div>
+      </div>
+      <div class="item">
+        <div class="itl">累积投入</div>
+        <div class="itr"><span id="totalEthOut">0</span>ETH</div>
+      </div>
+      <div class="item">
+        <div class="itl">获得分红</div>
+        <div class="itr"><span id="totalShare">0</span>ETH</div>
+      </div>
+      <div class="item">
+        <div class="itl">分享收益</div>
+        <div class="itr"><span id="totalAffProfit">0</span>ETH</div>
+      </div>
+    </div>
+    <div class="tb">提币</div>
+  </div>
+  <div class="fs">
+    发送专属推广链接给好友，好友通过你的专属推广链接打开并参与游戏成功，则终身锁定推荐关系，你的朋友每次参与，你将获得10%的经销商收益
+  </div>
+  <div class="end">2018 WOW Winner.All Rights Reseeved</div>
+</div>
+
+</body>
+</html>

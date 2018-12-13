@@ -11,7 +11,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150701120002) do
+ActiveRecord::Schema.define(version: 20181213035828) do
+
+  create_table "games", force: true do |t|
+    t.string   "name"
+    t.string   "core_address"
+    t.string   "player_book_address"
+    t.string   "actived_at"
+    t.text     "extro"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "resources", force: true do |t|
     t.string   "name"
