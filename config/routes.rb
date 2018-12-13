@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       get a = "#{a}_sta" => "statistics##{a}"
     end
     resources :users
+    resources :games
   end
   require 'sidekiq/web'
   mount Sidekiq::Web => '/aaaa'

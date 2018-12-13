@@ -18,7 +18,7 @@ class SessionController < ApplicationController
 
   private
   def auth_login(login, password)
-    u = Member.find_by(email: login)
+    u = User.find_by(email: login)
     u ? u.authenticate(password) : nil
   end
 end

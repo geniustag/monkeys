@@ -21,7 +21,8 @@ class ApplicationController < ActionController::Base
       return redirect_to login_path unless session[:user_id]
       return true if current_user && (current_user.can_access?(request.path) || current_user.is_admin?)
       flash[:danger] = I18n.t(:permission_denied)
-      redirect_to URI(session[:redirect_to]).path == root_path ? "/login" : session[:redirect_to]
+      # redirect_to URI(session[:redirect_to]).path == root_path ? "/login" : session[:redirect_to]
+      redirect_to current_user ? "/admin" : "/login"
     end
 
     def back_to_list(condition = true, msg = nil)

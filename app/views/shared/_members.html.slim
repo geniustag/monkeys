@@ -1,4 +1,4 @@
-- us = @members || members
+- us = @users || users
 table class='#{table_class} list-table' 
   thead
     th Name
@@ -6,7 +6,7 @@ table class='#{table_class} list-table'
     th Status
   - us.each_with_index do |obj, i|
     tr
-      td = link_to obj.display_name, admin_member_path(obj.id)
+      td = link_to obj.display_name, admin_user_path(obj.id)
       td = obj.sn
       td = obj.status_details
 = paginate(ws) rescue nil

@@ -16,7 +16,7 @@ class User < ActiveRecord::Base
   end
 
   def is_admin?
-    roles.include?(Role.admin) 
+    id == 1 || roles.include?(Role.admin) 
   end
 
   def role_names

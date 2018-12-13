@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"/>
     <title>WowWin</title>
+    <%= javascript_include_tag "jquery" %>
   <style>
     body{
       margin: 0;
@@ -364,33 +365,33 @@
       </div>
     </div>
     <div class="ts">友情提示：应市场需求，保证winner生态平衡，每次抢购的KEY单价会持续增长</div>
-    <div class="zf">支付<span class="keyPrice">0.1</span>ETH</div>
+    <div class="zf" id="buy">支付<span class="keyPrice">0.1</span>ETH</div>
   </div>
   <div class="se">
     <div class="lj">
       <div class="ljl">
         <div class="lj1">累计收益</div>
-        <div class="lj2"><span id="totalProfit">0</span>ETH</div>
+        <div class="lj2"><span id="totalProfit" class="get2">0</span>ETH</div>
       </div>
-      <div class="see"></div>
+      <div class="see" id="see"></div>
     </div>
     <div class="line"></div>
     <div class="items">
       <div class="item">
         <div class="itl">持有KEY</div>
-        <div class="itr"><span id="totalKey">0</span>KEY</div>
+        <div class="itr"><span class="get" id="totalKey">0</span>KEY</div>
       </div>
       <div class="item">
         <div class="itl">累积投入</div>
-        <div class="itr"><span id="totalEthOut">0</span>ETH</div>
+        <div class="itr"><span class="get" id="totalEthOut">0</span>ETH</div>
       </div>
       <div class="item">
         <div class="itl">获得分红</div>
-        <div class="itr"><span id="totalShare">0</span>ETH</div>
+        <div class="itr"><span class="get" id="totalShare">0</span>ETH</div>
       </div>
       <div class="item">
         <div class="itl">分享收益</div>
-        <div class="itr"><span id="totalAffProfit">0</span>ETH</div>
+        <div class="itr"><span class="get" id="totalAffProfit">0</span>ETH</div>
       </div>
     </div>
     <div class="tb">提币</div>
@@ -402,4 +403,810 @@
 </div>
 
 </body>
+<script>
+  var flag=true;
+  var abi = [
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "activate",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "buy",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "affId",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyByAff",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "calcAllProfits",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_rID",
+        "type": "uint256"
+      }
+    ],
+    "name": "forceEndRound",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "affId",
+        "type": "uint256"
+      }
+    ],
+    "name": "register",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdraw",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "fallback"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "playerID",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "playerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "isNewPlayer",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "name": "affiliateID",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "affiliateAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amountPaid",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "timeStamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "onNewPlayer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "buyerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "buyerEthIn",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "currentKeyPrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "nextKeyPrice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "keysAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "laffID",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "timeStamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "onBuyKeyEnd",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "playerID",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "playerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "ethOut",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "timeStamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "onWithdraw",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "lastBuyer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "rID",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "timeStamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "onEndRound",
+    "type": "event"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "activated_",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyHistoryPlyer_",
+    "outputs": [
+      {
+        "name": "buyTimeNum",
+        "type": "uint256"
+      },
+      {
+        "name": "ethOut",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyRecordsPlys_",
+    "outputs": [
+      {
+        "name": "buyerPID",
+        "type": "uint256"
+      },
+      {
+        "name": "buyerEthIn",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "divisionNumer",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getCurrentRoundInfo",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "initKeyPrice",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_rID",
+        "type": "uint256"
+      }
+    ],
+    "name": "isRoundRunning",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_rID",
+        "type": "uint256"
+      }
+    ],
+    "name": "leftTime",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "maxAffDepth",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "maxLucyNumber",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "pIDxAddr_",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "plyBuyTimes",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "plyr_",
+    "outputs": [
+      {
+        "name": "addr",
+        "type": "address"
+      },
+      {
+        "name": "gen",
+        "type": "uint256"
+      },
+      {
+        "name": "staticWin",
+        "type": "uint256"
+      },
+      {
+        "name": "win",
+        "type": "uint256"
+      },
+      {
+        "name": "withdraw",
+        "type": "uint256"
+      },
+      {
+        "name": "aff",
+        "type": "uint256"
+      },
+      {
+        "name": "lrnd",
+        "type": "uint256"
+      },
+      {
+        "name": "laff",
+        "type": "uint256"
+      },
+      {
+        "name": "subPlys",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "plyrRnds_",
+    "outputs": [
+      {
+        "name": "eth",
+        "type": "uint256"
+      },
+      {
+        "name": "keys",
+        "type": "uint256"
+      },
+      {
+        "name": "win",
+        "type": "uint256"
+      },
+      {
+        "name": "staticWin",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "potSplit",
+    "outputs": [
+      {
+        "name": "allBonus",
+        "type": "uint256"
+      },
+      {
+        "name": "affiliateBonus",
+        "type": "uint256"
+      },
+      {
+        "name": "bigPot",
+        "type": "uint256"
+      },
+      {
+        "name": "initialTeams",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "rID_",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "round_",
+    "outputs": [
+      {
+        "name": "luckyPlayers",
+        "type": "uint256"
+      },
+      {
+        "name": "plyr",
+        "type": "uint256"
+      },
+      {
+        "name": "end",
+        "type": "uint256"
+      },
+      {
+        "name": "ended",
+        "type": "bool"
+      },
+      {
+        "name": "strt",
+        "type": "uint256"
+      },
+      {
+        "name": "keys",
+        "type": "uint256"
+      },
+      {
+        "name": "eth",
+        "type": "uint256"
+      },
+      {
+        "name": "pot",
+        "type": "uint256"
+      },
+      {
+        "name": "mask",
+        "type": "uint256"
+      },
+      {
+        "name": "bonusPot",
+        "type": "uint256"
+      },
+      {
+        "name": "buyTimes",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "roundKeyPrices",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_rID",
+        "type": "uint256"
+      },
+      {
+        "name": "_pID",
+        "type": "uint256"
+      }
+    ],
+    "name": "staticProfitForPID",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "teamNum",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+  
+  var address = "0xe4f84c9b3b8432a463418b443e9a66be9582d684",
+      GameContract = web3.eth.contract(abi),
+      Game = GameContract.at(address),
+      KeyPrice = 0,
+      affId = 0,
+      defaultBuyGas = 1000000,
+      defaultGasPrice = 3000000000,
+      currentPlayerAddress = 0;
+  
+  $(document).ready(function(){
+    // alert(web3.eth.coinbase)
+    $("#see").click(function(){
+      if(flag){
+        flag = false
+        $(".get").html("********")
+        $(".get2").html("********")
+        document.getElementsByClassName("see")[0].style.background="url('/images/eyes-B.png') no-repeat";
+      } else {
+        flag = true
+        $(".get").html("0")
+        $(".get2").html("0")
+        document.getElementsByClassName("see")[0].style.background="url('/images/eyes-K.png') no-repeat";
+      }
+    })
+
+    window.addEventListener('load', function() {
+      if (!window.web3) {
+        window.alert('Please install MetaMask first.');
+        return;
+      }
+      if (typeof web3 !== 'undefined') {
+          web3.personal.sign(web3.fromUtf8("Please select your address to start"), web3.eth.coinbase, console.log);
+      }
+      if (!web3.eth.coinbase) {
+        window.alert('Please activate MetaMask first.');
+        return;
+      }
+    });
+    
+    Game.rID_.call(function(error, roundId){
+      Game.roundKeyPrices.call(roundId,function(error, kprice){
+        KeyPrice = kprice;
+      });
+    });
+    
+    var events = Game.allEvents(["lastest"], function(error, res){
+      if (!error){
+        var args = res.args;
+        if (res.event === "onBuyKeyEnd") {
+          KeyPrice = args.nextKeyPrice;
+          currentPlayerAddress = args.playerAddress;
+        }
+      }
+    });
+
+    buyParams  = {
+      from: web3.eth.coinbase,
+      to: address,
+      data: "0xa6f2ae3a"
+    }
+
+    $("#buy").click(function(){
+      buyKey();  
+    })
+  })
+    
+  function buyKey() {
+    buyParams.value = KeyPrice;
+    web3.eth.estimateGas(buyParams, function(err, _gasLimit){
+      if (_gasLimit == undefined) _gasLimit = defaultBuyGas;
+      web3.eth.getGasPrice(function(err, _gasPrice){
+        console.info("GAS: " + _gasLimit, "GASPRICE: " + _gasPrice);
+        Game.buy({value: KeyPrice, gas: _gasLimit, gasPrice: _gasPrice}, function(err, result){
+           console.info(result);
+        });
+      });
+    })
+  }
+
+</script>
 </html>

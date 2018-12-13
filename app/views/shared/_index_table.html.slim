@@ -10,7 +10,7 @@
         = values_for_columns(obj)
         td
           - if current_user.is_admin?
-            - if %w(members).include?(controller_name)
+            - if %w(users).include?(controller_name)
               .mr10.inline = edit_with_delete(obj)
           = info_link(obj)
           = render partial: "admin/#{controller_name}/actions", locals: {obj: obj} if klass.respond_to?(:special_actions)
