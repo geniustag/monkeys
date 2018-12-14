@@ -232,7 +232,7 @@ contract WowWin is WowWinEvents {
             currentPrice,
             roundKeyPrices[_rID],
             round_[_rID].keys,
-            plyr_[_pID].aff,
+            plyr_[_pID].laff,
             now
         );
     }

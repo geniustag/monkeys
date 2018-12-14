@@ -1187,7 +1187,7 @@
           Game.plyr_.call(pID,function(error, plyr_){
             console.info("plyr_");
             console.info(plyr_);
-            var totalProfit = ((plyr_[1] / 1 + plyr_[2] / 1 + plyr_[3] / 1 + plyr_[7] / 1 - plyr_[4] / 1) / (10 ** 18)).toFixed(6);
+            var totalProfit = ((plyr_[1] / 1 + plyr_[2] / 1 + plyr_[3] / 1 + plyr_[5] / 1 - plyr_[4] / 1) / (10 ** 18)).toFixed(6);
             $("#totalProfit").html(totalProfit); 
             $("#totalAffProfit").html((plyr_[5] / 10 ** 18).toFixed(6));
             $("#totalShare").html((plyr_[1] / 10 ** 18).toFixed(6));
@@ -1272,7 +1272,7 @@
           // web3.personal.sign(web3.fromUtf8("Please select your address to start"), web3.eth.coinbase, console.log);
       }
       if (!web3.eth.coinbase) {
-        window.alert('Please activate MetaMask first.');
+        // window.alert('Please activate MetaMask first.');
         return;
       } else {
         freshUI();
