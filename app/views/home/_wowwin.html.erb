@@ -1117,19 +1117,19 @@
     <div class="items">
       <div class="item">
         <div class="itl">持有KEY</div>
-        <div class="itr"><span class="get" id="totalKey">0</span>KEY</div>
+        <div class="itr"><span class="get" id="totalKey">0</span> KEY</div>
       </div>
       <div class="item">
         <div class="itl">累积投入</div>
-        <div class="itr"><span class="get" id="totalEthOut">0</span>ETH</div>
+        <div class="itr"><span class="get" id="totalEthOut">0</span> ETH</div>
       </div>
       <div class="item">
         <div class="itl">获得分红</div>
-        <div class="itr"><span class="get" id="totalShare">0</span>ETH</div>
+        <div class="itr"><span class="get" id="totalShare">0</span> ETH</div>
       </div>
       <div class="item">
         <div class="itl">分享收益</div>
-        <div class="itr"><span class="get" id="totalAffProfit">0</span>ETH</div>
+        <div class="itr"><span class="get" id="totalAffProfit">0</span> ETH</div>
       </div>
     </div>
     <div class="tb" id="withdraw">提币</div>
@@ -1148,9 +1148,15 @@
       Game = GameContract.at(address),
       KeyPrice = 0,
       affId = 0,
+      pID = 0,
       defaultBuyGas = 1000000,
       defaultGasPrice = 3000000000,
       currentPlayerAddress = 0;
+  
+  var code = location.href.split("code=")[1];
+  if (code != undefined) {
+    affId = parseInt(code);
+  }
   
   function freshUI() {
      Game.rID_.call(function(error, roundId){
@@ -1172,8 +1178,12 @@
         KeyPrice = roundInfo[11];
         $(".keyPrice").html((KeyPrice / 10 ** 18).toFixed(6));
         
-        Game.pIDxAddr_.call(web3.eth.coinbase,function(error, pID){
-          console.info("pID: " + pID);
+        Game.pIDxAddr_.call(web3.eth.coinbase,function(error, pID_){
+          console.info("pID: " + pID_);
+          pID = pID_;
+          if (pID == 0) {
+            return;
+          }
           Game.plyr_.call(pID,function(error, plyr_){
             console.info("plyr_");
             console.info(plyr_);
@@ -1278,6 +1288,7 @@
           KeyPrice = args.nextKeyPrice;
           currentPlayerAddress = args.playerAddress;
           if (currentPlayerAddress == web3.eth.coinbase) {
+            pID = args.buyerID;
             $("#totalEthOut") = parseFloat($("#totalEthOut").html())  + args.buyerEthIn / 10 ** 18;
             $("#totalKey") = parseInt($("#totalKey").html()) + 1;
           }
@@ -1322,14 +1333,27 @@
     })
   }
   function buyKey() {
+    if (pID == 0 && affId == 0) {
+      alert("您没有注册该游戏");
+      return;
+    }
+    if (pID == 0) {
+      buyParams.data = "0x1b11c111<%= @aff_data %>";
+    }
     buyParams.value = KeyPrice;
     web3.eth.estimateGas(buyParams, function(err, _gasLimit){
       if (_gasLimit == undefined) _gasLimit = defaultBuyGas;
       web3.eth.getGasPrice(function(err, _gasPrice){
         console.info("GAS: " + _gasLimit, "GASPRICE: " + _gasPrice);
-        Game.buy({value: KeyPrice, gas: _gasLimit, gasPrice: _gasPrice}, function(err, result){
-           console.info(result);
-        });
+        if (pID == 0) {
+          Game.buyByAff(affId, {value: KeyPrice, gas: _gasLimit, gasPrice: _gasPrice}, function(err, result){
+             console.info(result);
+          }); 
+        } else {
+          Game.buy({value: KeyPrice, gas: _gasLimit, gasPrice: _gasPrice}, function(err, result){
+             console.info(result);
+          }); 
+        }
       });
     })
   }

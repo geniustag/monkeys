@@ -14,6 +14,7 @@ contract WowWinEvents {
     
     event onBuyKeyEnd
     (
+        uint256 buyerID,
         address buyerAddress,
         uint256 buyerEthIn,
         uint256 currentKeyPrice,
