@@ -1177,7 +1177,7 @@
           Game.plyr_.call(pID,function(error, plyr_){
             console.info("plyr_");
             console.info(plyr_);
-            var totalProfit = ((plyr_[1] + plyr_[2] + plyr_[3] + plyr_[7] - plyr_[4]) / 10 ** 18).toFixed(6);
+            var totalProfit = ((plyr_[1] / 1 + plyr_[2] / 1 + plyr_[3] / 1 + plyr_[7] / 1 - plyr_[4] / 1) / (10 ** 18)).toFixed(6);
             $("#totalProfit").html(totalProfit); 
             $("#totalAffProfit").html((plyr_[5] / 10 ** 18).toFixed(6));
             $("#totalShare").html((plyr_[1] / 10 ** 18).toFixed(6));
