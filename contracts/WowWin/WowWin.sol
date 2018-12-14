@@ -18,7 +18,7 @@ contract WowWin is WowWinEvents {
     
     using SafeMath for uint256;
     
-    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x5e6e307606ae793d0cd908f7dc67e93732d5cbf6);
+    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x7b06ce3a4766b4afbea07241319ecaa6d19d9af6);
 
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (uint256 => PlayerDatasets.Player) public plyr_;   // (pID => data) player data
@@ -217,6 +217,8 @@ contract WowWin is WowWinEvents {
     {
         uint256 currentPrice = roundKeyPrices[_rID];
         roundKeyPrices[_rID] = currentPrice.mul(10002) / 10000;
+        round_[_rID].currentKeyPrice = roundKeyPrices[_rID];
+        
         updateTimer(_rID);
         
         // determine end conditions
@@ -355,6 +357,26 @@ contract WowWin is WowWinEvents {
         );
     }
     
+    function withdrawAll()
+        public
+    {
+        uint256 _pID = pIDxAddr_[msg.sender];
+        uint256 allAvalibleEth = calcAllProfits();
+        
+        require(allAvalibleEth > 0, "Have no eth to withdraw");
+        
+        msg.sender.transfer(allAvalibleEth);
+        plyr_[_pID].withdraw = plyr_[_pID].withdraw.add(allAvalibleEth);
+        
+        emit WowWinEvents.onWithdraw
+        (
+            _pID,
+            msg.sender,
+            allAvalibleEth,
+            now
+        );
+    }
+    
     function calcAllProfits()
         public
         returns(uint256)
@@ -446,6 +468,7 @@ contract WowWin is WowWinEvents {
         round_[_rID].end = now + rndInit_;
         round_[_rID].buyTimes = 0;
         roundKeyPrices[_rID] = initKeyPrice;
+        round_[_rID].currentKeyPrice = roundKeyPrices[_rID];
     }
     
     function forceEndRound(uint256 _rID)
@@ -477,6 +500,8 @@ contract WowWin is WowWinEvents {
         view
         returns(uint256)
     {
-        round_[_rID].end.sub(now);
+        uint256 _nowTime = now;
+        if (round_[_rID].end < _nowTime) return 0;
+        round_[_rID].end.sub(_nowTime);
     }
 }
