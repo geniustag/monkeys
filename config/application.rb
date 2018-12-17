@@ -5,9 +5,8 @@ require 'rails/all'
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
+
 Settings = YAML.load_file("config/settings.yml")
-CONTRACT_ADDRESSES = Settings["contract"][Rails.env]["address"]
-CONTRACT_OWNERS = Settings["contract"][Rails.env]["owner"]
 
 module Xadmin
   class Application < Rails::Application
@@ -21,7 +20,9 @@ module Xadmin
 
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
     config.autoload_paths += %W(#{config.root}/lib)
+    config.eager_load_paths += %W(#{config.root}/lib)
     config.i18n.default_locale = :zh_CN
     config.time_zone = 'Beijing'
+    config.active_record.raise_in_transactional_callbacks = true
   end
 end

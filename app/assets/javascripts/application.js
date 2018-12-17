@@ -16,6 +16,5 @@
 //= require bootstrap/tab
 //= require bootstrap/alert
 //= require bootstrap/modal
-//= require toastr
 //= require_tree .
 //
