@@ -15,6 +15,4 @@ Rails.application.routes.draw do
     resources :users
     resources :games
   end
-  require 'sidekiq/web'
-  mount Sidekiq::Web => '/aaaa'
 end
