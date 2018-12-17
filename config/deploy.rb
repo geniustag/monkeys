@@ -1,107 +1,94 @@
-require 'mina/bundler'
-require 'mina/rails'
-require 'mina/git'
-require 'mina/rvm'
-require 'mina/slack/tasks'
+# config valid only for current version of Capistrano
+# lock "3.8.0"
 
-set :repository, 'git@github.com:geniustag/monkeys.git'
-set :user, 'deploy'
-set :deploy_to, '/home/deploy/projects/dapp'
-domains = %w(18.216.165.30)
+set :application, "dapp"
+set :repo_url, "git@github.com:geniustag/monkeys.git"
 
-def rails_env
-  ENV['env']
-end
+# Default branch is :master
+# ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
+# Default deploy_to directory is /var/www/my_app_name
+# set :deploy_to, "/var/www/my_app_name"
 
-if rails_env == 'dev'
-  domains = %w(18.218.137.162)
-  set :rails_env, 'dev'
-  set :branch, 'master'
-elsif rails_env == 'production'
-  set :rails_env, 'production'
-  set :branch, 'master'
-end
+# Default value for :format is :airbrussh.
+# set :format, :airbrussh
 
-set :shared_paths, [
-  'config/database.yml',
-  'public/uploads',
-  'public/apps',
-  'tmp',
-  'log'
-]
+# You can configure the Airbrussh format using :format_options.
+# These are the defaults.
+set :format_options, command_output: true, log_file: "log/capistrano.log", color: :auto, truncate: :auto
 
-task :environment do
-  invoke :'rvm:use[2.1.0]'
-end
+# Default value for :pty is false
+# set :pty, true
 
-task :setup => :environment do
-  queue! %[mkdir -p "#{deploy_to}/shared/log"]
-  queue! %[chmod g+rx,u+rwx "#{deploy_to}/shared/log"]
+# Default value for :linked_files is []
+append :linked_files, "config/database.yml" #, "config/settings.yml"
 
-  queue! %[mkdir -p "#{deploy_to}/shared/config"]
-  queue! %[chmod g+rx,u+rwx "#{deploy_to}/shared/config"]
+# Default value for linked_dirs is []
+append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system", "public/uploads", "public/apps"
 
-  queue! %[mkdir -p "#{deploy_to}/shared/tmp"]
-  queue! %[chmod g+rx,u+rwx "#{deploy_to}/shared/tmp"]
+set :bundle_without, %w{development test}.join(' ')
+set :assets_roles, [:assets]
 
-  queue! %[touch "#{deploy_to}/shared/config/database.yml"]
-end
+set :rvm_ruby_string, 'rvm use ruby-2.3.0'
+# set :default_env, { path: "/opt/ruby/bin:$PATH" }
+# set :default_env, {
+#   "PATH" =>"/home/deploy/.rvm/rubies/ruby-2.3.0/bin:$PATH",
+#   "GEM_HOME" => "/home/deploy/.rvm/gems"
+# }
 
-desc "Deploys the current version to the server."
-task deploy: :environment do
-  deploy do
-    invoke :'git:clone'
-    invoke :'deploy:link_shared_paths'
-    invoke :'bundle:install'
-    invoke :'rails:db_migrate'
-    invoke :'rails:touch_client_i18n_assets'
-    invoke :'rails:assets_precompile'
+set :default_shell, '/bin/bash -l'
 
-    to :launch do
-      invoke :'passenger:restart'
-      invoke :'sidekiq:restart'
+# Default value for keep_releases is 5
+# set :keep_releases, 5
+#
+namespace :deploy do
+
+  desc 'migrate'
+  task :migrate do
+    on roles(:db), in: :sequence, wait: 5 do
+      within release_path do    
+        with rails_env: fetch(:rails_env) do
+          execute :bundle, :exec, :'rake db:migrate'
+        end 
+      end 
     end
   end
-end
 
-task mdeploy: :environment do
-  domains.each do |domain|
-    puts "Deploy with: #{domain}"
-    set :domain, domain
-    invoke :deploy
+  task :assets_compile do
+    on roles(:app), in: :sequence, wait: 5 do
+      within release_path do    
+        with rails_env: fetch(:rails_env) do
+          execute :bundle, :exec, :'rake assets:precompile'
+        end 
+      end 
+    end
   end
-end
 
-namespace :sidekiq do
-  desc "Restart Sidekiq"
+  desc 'Restart application'
   task :restart do
-    queue %{
-      echo "-----> Restarting Sidekiq"
-      cd #{deploy_to}/current
-      #{echo_cmd %[RAILS_ENV=#{rails_env} bundle exec sidekiqctl stop tmp/pids/sidekiq.pid]}
-      #{echo_cmd %[RAILS_ENV=#{rails_env} bundle exec sidekiq -C config/sidekiq.yml -d]}
-    }
+    on roles(:app), in: :sequence, wait: 5 do
+      execute :touch, release_path.join('tmp/restart.txt')
+    end
   end
-end
 
-namespace :passenger do
-  desc "Restart Passenger"
-  task :restart do
-    queue %{
-      echo "-----> Restarting passenger"
-      cd #{deploy_to}/current
-      #{echo_cmd %[mkdir -p tmp]}
-      #{echo_cmd %[touch tmp/restart.txt]}
-    }
+  desc 'Restart application'
+  task :restart_nginx do
+    on roles(:app), in: :sequence, wait: 5 do
+      within release_path do    
+        with rails_env: fetch(:rails_env) do
+          execute "kill `ps -ef |grep nginx |grep -v grep |awk '{print $2}'`" rescue nil 
+          execute :sudo, '/opt/nginx/sbin/nginx'
+        end
+      end
+    end
   end
-end
 
-namespace :rails do
-  task :touch_client_i18n_assets do
-    queue %[
-      echo "-----> Touching clint i18n assets"
-      #{echo_cmd %[RAILS_ENV=#{rails_env} bundle exec rake deploy:touch_client_i18n_assets]}
-    ]
+  after :restart, :clear_cache do
+    on roles(:web), in: :groups, limit: 3, wait: 10 do
+    end
   end
+
+  after :publishing, :restart
+  before :publishing, :migrate
+  before :publishing, :assets_compile
 end
 
