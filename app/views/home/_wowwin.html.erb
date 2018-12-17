@@ -5,8 +5,35 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"/>
     <title>WowWin</title>
     <%= javascript_include_tag "jquery", "/js/moment.min.js" %>
-  <script type="text/javascript">
-    window.abi = [
+    <%= csrf_meta_tags %>
+    <script type="text/javascript">
+      window.abi = [
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "potSplit",
+    "outputs": [
+      {
+        "name": "allBonus",
+        "type": "uint256"
+      },
+      {
+        "name": "affiliateBonus",
+        "type": "uint256"
+      },
+      {
+        "name": "bigPot",
+        "type": "uint256"
+      },
+      {
+        "name": "initialTeams",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
   {
     "constant": false,
     "inputs": [],
@@ -17,12 +44,22 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [],
-    "name": "buy",
-    "outputs": [],
-    "payable": true,
-    "stateMutability": "payable",
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "pIDxAddr_",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -40,6 +77,120 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "round_",
+    "outputs": [
+      {
+        "name": "luckyPlayers",
+        "type": "uint256"
+      },
+      {
+        "name": "plyr",
+        "type": "uint256"
+      },
+      {
+        "name": "end",
+        "type": "uint256"
+      },
+      {
+        "name": "ended",
+        "type": "bool"
+      },
+      {
+        "name": "strt",
+        "type": "uint256"
+      },
+      {
+        "name": "keys",
+        "type": "uint256"
+      },
+      {
+        "name": "eth",
+        "type": "uint256"
+      },
+      {
+        "name": "pot",
+        "type": "uint256"
+      },
+      {
+        "name": "mask",
+        "type": "uint256"
+      },
+      {
+        "name": "bonusPot",
+        "type": "uint256"
+      },
+      {
+        "name": "buyTimes",
+        "type": "uint256"
+      },
+      {
+        "name": "currentKeyPrice",
+        "type": "uint256"
+      },
+      {
+        "name": "lastBuyAt",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "teamNum",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdraw",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "plyBuyTimes",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [],
     "name": "calcAllProfits",
@@ -54,6 +205,210 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "maxLucyNumber",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "rID_",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "maxAffDepth",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getCurrentRoundInfo",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "divisionNumer",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_rID",
+        "type": "uint256"
+      }
+    ],
+    "name": "isRoundRunning",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "withdrawAll",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "initKeyPrice",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "plyrRnds_",
+    "outputs": [
+      {
+        "name": "eth",
+        "type": "uint256"
+      },
+      {
+        "name": "keys",
+        "type": "uint256"
+      },
+      {
+        "name": "win",
+        "type": "uint256"
+      },
+      {
+        "name": "staticWin",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "buy",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "roundKeyPrices",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -65,6 +420,113 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_rID",
+        "type": "uint256"
+      },
+      {
+        "name": "_pID",
+        "type": "uint256"
+      }
+    ],
+    "name": "staticProfitForPID",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_rID",
+        "type": "uint256"
+      }
+    ],
+    "name": "leftTime",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "activated_",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "plyr_",
+    "outputs": [
+      {
+        "name": "addr",
+        "type": "address"
+      },
+      {
+        "name": "gen",
+        "type": "uint256"
+      },
+      {
+        "name": "staticWin",
+        "type": "uint256"
+      },
+      {
+        "name": "win",
+        "type": "uint256"
+      },
+      {
+        "name": "withdraw",
+        "type": "uint256"
+      },
+      {
+        "name": "aff",
+        "type": "uint256"
+      },
+      {
+        "name": "lrnd",
+        "type": "uint256"
+      },
+      {
+        "name": "laff",
+        "type": "uint256"
+      },
+      {
+        "name": "subPlys",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -87,26 +549,57 @@
     "type": "function"
   },
   {
-    "constant": false,
+    "constant": true,
     "inputs": [
       {
-        "name": "amount",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "withdraw",
-    "outputs": [],
+    "name": "buyRecordsPlys_",
+    "outputs": [
+      {
+        "name": "buyerPID",
+        "type": "uint256"
+      },
+      {
+        "name": "buyerEthIn",
+        "type": "uint256"
+      }
+    ],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [],
-    "name": "withdrawAll",
-    "outputs": [],
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "buyHistoryPlyer_",
+    "outputs": [
+      {
+        "name": "buyTimeNum",
+        "type": "uint256"
+      },
+      {
+        "name": "ethOut",
+        "type": "uint256"
+      }
+    ],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -165,6 +658,11 @@
   {
     "anonymous": false,
     "inputs": [
+      {
+        "indexed": false,
+        "name": "buyerID",
+        "type": "uint256"
+      },
       {
         "indexed": false,
         "name": "buyerAddress",
@@ -252,494 +750,6 @@
     ],
     "name": "onEndRound",
     "type": "event"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "activated_",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "buyHistoryPlyer_",
-    "outputs": [
-      {
-        "name": "buyTimeNum",
-        "type": "uint256"
-      },
-      {
-        "name": "ethOut",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "buyRecordsPlys_",
-    "outputs": [
-      {
-        "name": "buyerPID",
-        "type": "uint256"
-      },
-      {
-        "name": "buyerEthIn",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "divisionNumer",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "getCurrentRoundInfo",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "initKeyPrice",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_rID",
-        "type": "uint256"
-      }
-    ],
-    "name": "isRoundRunning",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_rID",
-        "type": "uint256"
-      }
-    ],
-    "name": "leftTime",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "maxAffDepth",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "maxLucyNumber",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "pIDxAddr_",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "plyBuyTimes",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "plyr_",
-    "outputs": [
-      {
-        "name": "addr",
-        "type": "address"
-      },
-      {
-        "name": "gen",
-        "type": "uint256"
-      },
-      {
-        "name": "staticWin",
-        "type": "uint256"
-      },
-      {
-        "name": "win",
-        "type": "uint256"
-      },
-      {
-        "name": "withdraw",
-        "type": "uint256"
-      },
-      {
-        "name": "aff",
-        "type": "uint256"
-      },
-      {
-        "name": "lrnd",
-        "type": "uint256"
-      },
-      {
-        "name": "laff",
-        "type": "uint256"
-      },
-      {
-        "name": "subPlys",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "plyrRnds_",
-    "outputs": [
-      {
-        "name": "eth",
-        "type": "uint256"
-      },
-      {
-        "name": "keys",
-        "type": "uint256"
-      },
-      {
-        "name": "win",
-        "type": "uint256"
-      },
-      {
-        "name": "staticWin",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "potSplit",
-    "outputs": [
-      {
-        "name": "allBonus",
-        "type": "uint256"
-      },
-      {
-        "name": "affiliateBonus",
-        "type": "uint256"
-      },
-      {
-        "name": "bigPot",
-        "type": "uint256"
-      },
-      {
-        "name": "initialTeams",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "rID_",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "round_",
-    "outputs": [
-      {
-        "name": "luckyPlayers",
-        "type": "uint256"
-      },
-      {
-        "name": "plyr",
-        "type": "uint256"
-      },
-      {
-        "name": "end",
-        "type": "uint256"
-      },
-      {
-        "name": "ended",
-        "type": "bool"
-      },
-      {
-        "name": "strt",
-        "type": "uint256"
-      },
-      {
-        "name": "keys",
-        "type": "uint256"
-      },
-      {
-        "name": "eth",
-        "type": "uint256"
-      },
-      {
-        "name": "pot",
-        "type": "uint256"
-      },
-      {
-        "name": "mask",
-        "type": "uint256"
-      },
-      {
-        "name": "bonusPot",
-        "type": "uint256"
-      },
-      {
-        "name": "buyTimes",
-        "type": "uint256"
-      },
-      {
-        "name": "currentKeyPrice",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "roundKeyPrices",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "_rID",
-        "type": "uint256"
-      },
-      {
-        "name": "_pID",
-        "type": "uint256"
-      }
-    ],
-    "name": "staticProfitForPID",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "teamNum",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
   }
 ];
   </script>
@@ -1143,7 +1153,8 @@
 </body>
 <script>
   var showProfits = true;
-  var address = "0x9c3abc1382536c7c3fc4d390377d2ea5493c80d4",
+  // var address = "0x9c3abc1382536c7c3fc4d390377d2ea5493c80d4",
+  var address = "0xb430f3821ffdd078da2aea6afb5a04e8518bea0d",
       GameContract = web3.eth.contract(abi),
       Game = GameContract.at(address),
       KeyPrice = 0,
@@ -1158,16 +1169,41 @@
     affId = parseInt(code);
   }
   
+  function save(res, buy_type, pid) {
+    kp = KeyPrice.toString();
+    data =  {
+      authenticity_token: $("meta[name='csrf-token']").attr("content"),
+      tx_hash: res,
+      player_id: pid.toString(),
+      tran_type: buy_type,
+      key_price: kp
+    }
+    $.ajax({
+      url: "/buy",
+      type: "POST",
+      data: data,
+      success: function(res) {
+        if (res === "OK") {
+          alert("Buy OK");
+        }
+      }
+    });
+  }
+
+  function log(res) {
+    // console.info(res);
+  }
+  
   function freshUI() {
      Game.rID_.call(function(error, roundId){
-      console.info("ROUNDID: " + roundId);
+      log("ROUNDID: " + roundId);
       if (error) {
         return;
       }
       $("#roundID").html(roundId + "")
 
       Game.round_.call(roundId,function(error, roundInfo){
-        console.info("ROUND_INFO: " + roundInfo);
+        log("ROUND_INFO: " + roundInfo);
 
         if (roundInfo[4] == 0) {
           $("#title").html("游戏未开始");
@@ -1180,14 +1216,14 @@
         
         if (showProfits) {
           Game.pIDxAddr_.call(web3.eth.coinbase,function(error, pID_){
-            console.info("pID: " + pID_);
+            log("pID: " + pID_);
             pID = pID_;
             if (pID == 0) {
               return;
             }
             Game.plyr_.call(pID,function(error, plyr_){
-              console.info("plyr_");
-              console.info(plyr_);
+              log("plyr_");
+              log(plyr_);
               var totalProfit = ((plyr_[1] / 1 + plyr_[2] / 1 + plyr_[3] / 1 + plyr_[5] / 1 - plyr_[4] / 1) / (10 ** 18)).toFixed(6);
               $("#totalProfit").html(totalProfit); 
               $("#totalAffProfit").html((plyr_[5] / 10 ** 18).toFixed(6));
@@ -1195,8 +1231,8 @@
             })
 
             Game.plyrRnds_.call(pID, roundId, function(error, plyrRnds_) {
-              console.info("plyrRnds_");
-              console.info(plyrRnds_);
+              log("plyrRnds_");
+              log(plyrRnds_);
               $("#totalEthOut").html((plyrRnds_[0] / 10 ** 18).toFixed(10));
               $("#totalKey").html(plyrRnds_[1] / 1);
             })
@@ -1208,7 +1244,7 @@
             leftTime = end - now;
 
         // Game.leftTime.call(roundId,function(error, leftTime){
-          // console.info("LEFT_TIME: " + leftTime);
+          // log("LEFT_TIME: " + leftTime);
 
           var seconds = leftTime,
               leftDays = parseInt(seconds / (3600 * 24)),
@@ -1240,7 +1276,9 @@
               $("#second_2").html(leftSeconds);
             }
           } else {
-
+            if (true) {
+              $("#title").html("游戏已结束");
+            }
           }
         // });
       });
@@ -1287,16 +1325,18 @@
     var events = Game.allEvents(["lastest"], function(error, res){
       if (!error){
         var args = res.args;
+        log(res);
         if (res.event === "onBuyKeyEnd") {
           KeyPrice = args.nextKeyPrice;
-          currentPlayerAddress = args.playerAddress;
+          currentPlayerAddress = args.buyerAddress;
           if (currentPlayerAddress == web3.eth.coinbase) {
             pID = args.buyerID;
-            $("#totalEthOut") = parseFloat($("#totalEthOut").html())  + args.buyerEthIn / 10 ** 18;
-            $("#totalKey") = parseInt($("#totalKey").html()) + 1;
+            $("#totalEthOut").html( parseFloat($("#totalEthOut").html())  + args.buyerEthIn / 10 ** 18 );
+            $("#totalKey").html( parseInt($("#totalKey").html()) + 1 );
           }
         }
         freshUI();
+        save(res.transactionHash,"onBuyKeyEnd",args.buyerID);
       }
     });
 
@@ -1328,9 +1368,9 @@
     web3.eth.estimateGas(buyParams, function(err, _gasLimit){
       if (_gasLimit == undefined) _gasLimit = defaultBuyGas;
       web3.eth.getGasPrice(function(err, _gasPrice){
-        console.info("GAS: " + _gasLimit, "GASPRICE: " + _gasPrice);
+        log("GAS: " + _gasLimit, "GASPRICE: " + _gasPrice);
         Game.withdrawAll(function(err, result){
-           console.info("提现Hash: " + result);
+           log("提现Hash: " + result);
         });
       });
     })
@@ -1347,14 +1387,14 @@
     web3.eth.estimateGas(buyParams, function(err, _gasLimit){
       if (_gasLimit == undefined) _gasLimit = defaultBuyGas;
       web3.eth.getGasPrice(function(err, _gasPrice){
-        console.info("GAS: " + _gasLimit, "GASPRICE: " + _gasPrice);
+        log("GAS: " + _gasLimit, "GASPRICE: " + _gasPrice);
         if (pID == 0) {
           Game.buyByAff(affId, {value: KeyPrice, gas: _gasLimit, gasPrice: _gasPrice}, function(err, result){
-             console.info(result);
+             save(result, "buyByAff", pID);
           }); 
         } else {
           Game.buy({value: KeyPrice, gas: _gasLimit, gasPrice: _gasPrice}, function(err, result){
-             console.info(result);
+             save(result, "buy", pID);
           }); 
         }
       });

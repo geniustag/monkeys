@@ -18,7 +18,7 @@ contract WowWin is WowWinEvents {
     
     using SafeMath for uint256;
     
-    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x7b06ce3a4766b4afbea07241319ecaa6d19d9af6);
+    PlayerBookInterface constant private playerBook = PlayerBookInterface(0x32ae4a005c2c69a88935128713d80c8222a8b351);
 
     mapping (address => uint256) public pIDxAddr_;          // (addr => pID) returns player id by address
     mapping (uint256 => PlayerDatasets.Player) public plyr_;   // (pID => data) player data
@@ -152,6 +152,12 @@ contract WowWin is WowWinEvents {
         uint256 _keys = 1;
         uint256 _rID = rID_;
         
+        if (!isRoundRunning(_rID)){
+            endRound();
+            return;
+        }
+        
+        require(now.sub(round_[_rID].lastBuyAt) >=5 , "Need to 5 seconds to generate Key");
         require(_eth >= roundKeyPrices[_rID], "not enough ETH....");
         
         // set new leaders
@@ -220,9 +226,7 @@ contract WowWin is WowWinEvents {
         round_[_rID].currentKeyPrice = roundKeyPrices[_rID];
         
         updateTimer(_rID);
-        
-        // determine end conditions
-        endRound();
+        mineNewKey(_rID);
         
         emit WowWinEvents.onBuyKeyEnd
         (
@@ -235,6 +239,12 @@ contract WowWin is WowWinEvents {
             plyr_[_pID].laff,
             now
         );
+    }
+    
+    function mineNewKey(uint256 _rID)
+        private
+    {
+        round_[_rID].lastBuyAt = now;
     }
     
     function endRound()
@@ -259,36 +269,37 @@ contract WowWin is WowWinEvents {
         uint256 _rID = rID_;
         uint256 keys = round_[_rID].keys;
         
-        require(keys >= 1000, "less keys, bad luck");
-        
-        for(uint256 i = 0;i<15;i++){
-            uint256 _pid = buyRecordsPlys_[_rID][round_[_rID].buyTimes - i].buyerPID;
-            uint256 _winPercent = 1;
-            if (i == 0){
-                 _winPercent = 35; //35% give to last player
-            } else if (i == 1){
-                 _winPercent = 10;
-            } else if (i == 2){
-                 _winPercent = 5;
-            } else if (i == 3){
-                 _winPercent = 3;
-            } else if (i == 4){
-                 _winPercent = 2;
+        // require(keys >= 1000, "less keys, bad luck");
+        if (keys >= 1000) {
+            for(uint256 i = 0;i<15;i++){
+                uint256 _pid = buyRecordsPlys_[_rID][round_[_rID].buyTimes - i].buyerPID;
+                uint256 _winPercent = 1;
+                if (i == 0){
+                     _winPercent = 35; //35% give to last player
+                } else if (i == 1){
+                     _winPercent = 10;
+                } else if (i == 2){
+                     _winPercent = 5;
+                } else if (i == 3){
+                     _winPercent = 3;
+                } else if (i == 4){
+                     _winPercent = 2;
+                }
+                plyr_[_pid].win = plyr_[_pid].win.add(round_[_rID].pot.mul(_winPercent) / 100); 
             }
-            plyr_[_pid].win = plyr_[_pid].win.add(round_[_rID].pot.mul(_winPercent) / 100); 
-        }
-        
-        if (divisionNumer[_rID] == 0){
-            if (keys >= 1000 && keys < 5000){
-                divisionNumer[_rID] = keys.mul(60)/ 100; // first 60% buyers
-            } else if (keys >= 5000 && keys < 10000){
-                divisionNumer[_rID] = keys.mul(70)/ 100; // first 70% buyers
-            } else if (keys >= 10000 && keys < 15000){
-                divisionNumer[_rID] = keys.mul(75)/ 100; // first 75% buyers
-            } else if (keys >= 15000){
-                divisionNumer[_rID] = keys.mul(80)/ 100; // first 80% buyers
+            
+            if (divisionNumer[_rID] == 0){
+                if (keys >= 1000 && keys < 5000){
+                    divisionNumer[_rID] = keys.mul(60)/ 100; // first 60% buyers
+                } else if (keys >= 5000 && keys < 10000){
+                    divisionNumer[_rID] = keys.mul(70)/ 100; // first 70% buyers
+                } else if (keys >= 10000 && keys < 15000){
+                    divisionNumer[_rID] = keys.mul(75)/ 100; // first 75% buyers
+                } else if (keys >= 15000){
+                    divisionNumer[_rID] = keys.mul(80)/ 100; // first 80% buyers
+                }
             }
-        }
+        } 
         
         round_[_rID].end = now;
         round_[_rID].ended = true;
@@ -443,7 +454,7 @@ contract WowWin is WowWinEvents {
         view
         returns(bool)
     {
-        if (now >= round_[_rID].strt.add(7 days)) return false;
+        if (now >= round_[_rID].strt.add(7 days) || now >= round_[_rID].end) return false;
         return (_rID == rID_) && (round_[_rID].keys < 1000 || !round_[_rID].ended);
     }
     
@@ -501,8 +512,7 @@ contract WowWin is WowWinEvents {
         view
         returns(uint256)
     {
-        uint256 _nowTime = now;
-        if (round_[_rID].end < _nowTime) return 0;
-        round_[_rID].end.sub(_nowTime);
+        if (round_[_rID].end <= now) return 0;
+        return round_[_rID].end.sub(now);
     }
 }

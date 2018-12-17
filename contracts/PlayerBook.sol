@@ -49,6 +49,7 @@ contract PlayerBook {
         returns (uint256)
     {
         require (affID > 0 && plyr_[affID].addr != address(0), "Invalid affId");
+        require (affID != pIDxAddr_[_addr], "can not be self");
         
         if (pIDxAddr_[_addr] == 0)
         {

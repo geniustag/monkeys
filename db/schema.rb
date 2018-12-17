@@ -11,7 +11,31 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20181214115607) do
+ActiveRecord::Schema.define(version: 20181217023928) do
+
+  create_table "etransactions", force: true do |t|
+    t.integer  "player_id"
+    t.integer  "address"
+    t.string   "efrom"
+    t.string   "eto"
+    t.string   "amount"
+    t.string   "key_price"
+    t.text     "extra_info"
+    t.string   "token"
+    t.string   "tx_hash"
+    t.integer  "status"
+    t.text     "event_data"
+    t.string   "meth"
+    t.integer  "parent_id"
+    t.integer  "tran_type"
+    t.integer  "block_number"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+  end
+
+  add_index "etransactions", ["address"], name: "index_etransactions_on_address", using: :btree
+  add_index "etransactions", ["key_price"], name: "index_etransactions_on_key_price", unique: true, using: :btree
+  add_index "etransactions", ["tx_hash"], name: "index_etransactions_on_tx_hash", unique: true, using: :btree
 
   create_table "games", force: true do |t|
     t.string   "name"
