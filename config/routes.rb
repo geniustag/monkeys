@@ -7,6 +7,8 @@ Rails.application.routes.draw do
   post "login" => "session#login"
 
   post "buy" => "home#buy"
+  get "grab_key" => "home#grab_key"
+  get "check_key" => "home#check_key"
 
   namespace :admin do
     %w(users).each do |a|

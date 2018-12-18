@@ -11,7 +11,8 @@ class Etransaction < ActiveRecord::Base
     buy: 0,
     buyByAff: 1,
     withdraw: 2,
-    withdrawAll: 3
+    withdrawAll: 3,
+    onBuyKeyEnd: 4
   }
 
   enum status: {
